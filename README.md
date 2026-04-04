@@ -104,6 +104,10 @@ Models that run on smartphones, laptops, or edge devices.
 
 | Model | Active | VRAM Q4 | Strength | License |
 |-------|--------|---------|----------|---------|
+| [SmolLM3-3B](https://huggingface.co/HuggingFaceTB/SmolLM3-3B) | 3B | ~2 GB | Best 3B, AIME 36.7%, /think mode, 64K ctx | Apache 2.0 |
+| [SmolLM2-1.7B](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) | 1.7B | ~1 GB | 11T tokens, data-centric | Apache 2.0 |
+| [SmolLM2-360M](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct) | 360M | < 1 GB | 4T tokens | Apache 2.0 |
+| [SmolLM2-135M](https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct) | 135M | < 1 GB | Ultra-compact, few MB quantized | Apache 2.0 |
 | [Gemma 4 E2B](https://huggingface.co/google/gemma-4-E2B-it) | 2.3B | ~4 GB | Multimodal + audio | Apache 2.0 |
 | [Gemma 4 E4B](https://huggingface.co/google/gemma-4-E4B-it) | 4.5B | ~6 GB | Multimodal + audio | Apache 2.0 |
 | [Phi-4-mini](https://huggingface.co/microsoft/phi-4) | 3.8B | ~2 GB | MATH-500 92.5% | MIT |
@@ -111,6 +115,8 @@ Models that run on smartphones, laptops, or edge devices.
 | [Ministral 3B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 3B | ~2 GB | Vision + reasoning, 256K ctx | Apache 2.0 |
 | [Ministral 8B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 8B | ~5 GB | AIME 78.7%, vision | Apache 2.0 |
 | [Ministral 14B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 14B | ~8 GB | AIME 85%, vision, 256K ctx | Apache 2.0 |
+
+> SmolLM3-3B beats all other 3B models and competes with 4B models (Qwen3-4B, Gemma3-4B). Data quality matters more than model size: SmolLM2-1.7B trained on 11T tokens beats larger models trained on less data.
 
 ### Long context
 
@@ -267,7 +273,7 @@ What each benchmark measures and when to trust it.
 
 | Constraint | Recommendation |
 |-----------|---------------|
-| Smartphone / edge (< 4 GB) | Gemma 4 E2B, Phi-4-mini, Ministral 3B |
+| Smartphone / edge (< 4 GB) | SmolLM3-3B, SmolLM2-135M/360M/1.7B, Gemma 4 E2B, Phi-4-mini, Ministral 3B |
 | Laptop 16 GB | GPT-OSS-20B, Ministral 14B, Gemma 4 26B-A4B |
 | Desktop 24 GB | Gemma 4 31B, DeepSeek R1-Distill-32B, Devstral Small 2 |
 | Server single-GPU (80 GB) | GPT-OSS-120B |
