@@ -199,7 +199,7 @@ Patterns observed across 60+ models. Not definitive truths.
 
 - **Parameter count is no longer the determining factor.** Qwen3.5-9B (9B) beats GPT-OSS-120B (5.1B active, 117B total) on GPQA Diamond.
 
-- **The 40-79B segment is a desert.** MoE models jump from ~35B to ~120B total. Only Jamba 1.6 Mini (52B) and R1-Distill-70B (70B) occupy this space.
+- **The 40-79B segment is thinning out.** New models tend to jump from ~35B to ~120B total via MoE. The segment still has strong entries (Qwen 2.5-72B, R1-Distill-70B, Jamba 1.6 Mini 52B), but no new entrants in 2025-2026.
 
 - **Qwen is the de facto base model** for fine-tuning. BFS-Prover, Goedel-Prover, Kimina-Prover, most community distillations: all built on Qwen. The ResNet of LLMs.
 
