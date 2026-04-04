@@ -29,12 +29,6 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
   - [Search agents](#search-agents)
   - [Tool calling](#tool-calling)
   - [Rust](#rust)
-- [Non-LLM models](#non-llm-models)
-  - [Embedding & retrieval](#embedding--retrieval)
-  - [Speech recognition (ASR)](#speech-recognition-asr)
-  - [Text-to-speech (TTS)](#text-to-speech-tts)
-  - [Image generation](#image-generation)
-  - [3D generation](#3d-generation)
 - [Observations](#observations)
 - [Benchmarks reference](#benchmarks-reference)
 - [Licenses](#licenses)
@@ -54,24 +48,24 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
 | [Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) | Alibaba | 27B | 27B | Dense | 128K | Apache 2.0 | 201 languages |
 | [Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) | Alibaba | 9B | 9B | Dense | 128K | Apache 2.0 | GPQA 81.7 (9B!) |
 | [Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) | Alibaba | 10B | 122B | MoE | 256K | Apache 2.0 | 201 languages, multimodal |
-| [GPT-OSS-120B](https://huggingface.co/openai) | OpenAI | 5.1B | 117B | MoE | 128K | Apache 2.0 | GPQA 80.9, Codeforces 2622, AIME 96.6% |
-| [GPT-OSS-20B](https://huggingface.co/openai) | OpenAI | 3.6B | 21B | MoE | 128K | Apache 2.0 | AIME 96%, fits 16GB |
-| [Mistral Small 4](https://huggingface.co/mistralai) | Mistral | 6B | 119B | MoE | 256K | Apache 2.0 | GPQA 71.2, unified instruct/reasoning/coding |
+| [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | OpenAI | 5.1B | 117B | MoE | 128K | Apache 2.0 | GPQA 80.9, Codeforces 2622, AIME 96.6% |
+| [GPT-OSS-20B](https://huggingface.co/openai/GPT-OSS-20B) | OpenAI | 3.6B | 21B | MoE | 128K | Apache 2.0 | AIME 96%, fits 16GB |
+| [Mistral Small 4](https://huggingface.co/mistralai/Mistral-Small-4-128K) | Mistral | 6B | 119B | MoE | 256K | Apache 2.0 | GPQA 71.2, unified instruct/reasoning/coding |
 | [GLM-4.5-Air](https://huggingface.co/zai-org/GLM-4.5) | Zhipu AI | 12B | 106B | MoE | 128K | MIT | MATH-500 98.1%, MMLU-Pro 81.4 |
 | [QwQ-32B](https://huggingface.co/Qwen/QwQ-32B) | Alibaba | 32B | 32B | Dense | 128K | Apache 2.0 | AIME ~80%, reasoning RL |
 | [DeepSeek R1-Distill-32B](https://huggingface.co/deepseek-ai/DeepSeek-R1) | DeepSeek | 32B | 32B | Dense | 128K | MIT | Beats o1-mini |
-| [Step-3.5-Flash](https://huggingface.co/stepfun-ai) | StepFun | 11B | 196B | MoE | 262K | Apache 2.0 | SWE-bench 74.4%, 350 tok/s |
+| [Step-3.5-Flash](https://huggingface.co/stepfun-ai/Step-3.5-Flash) | StepFun | 11B | 196B | MoE | 262K | Apache 2.0 | SWE-bench 74.4%, 350 tok/s |
 
 ### Code
 
 | Model | SWE-bench | Codeforces | Active | License |
 |-------|-----------|-----------|--------|---------|
-| [Step-3.5-Flash](https://huggingface.co/stepfun-ai) | **74.4%** | -- | 11B | Apache 2.0 |
-| [Devstral 2](https://huggingface.co/mistralai) | 72.2% | -- | ~12B | MIT modified |
-| [Qwen3-Coder-Next 80B-A3B](https://huggingface.co/Qwen) | 70.6% | -- | 3B | Apache 2.0 |
+| [Step-3.5-Flash](https://huggingface.co/stepfun-ai/Step-3.5-Flash) | **74.4%** | -- | 11B | Apache 2.0 |
+| [Devstral 2](https://huggingface.co/mistralai/Devstral-2) | 72.2% | -- | ~12B | MIT modified |
+| [Qwen3-Coder-Next 80B-A3B](https://huggingface.co/Qwen/Qwen3-Coder-Next-80B-A3B) | 70.6% | -- | 3B | Apache 2.0 |
 | [Qwen2.5-Coder-32B](https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct) | 69.6% | -- | 32B | Apache 2.0 |
-| [Devstral Small 2](https://huggingface.co/mistralai) | 68.0% | -- | 24B | Apache 2.0 |
-| [GPT-OSS-120B](https://huggingface.co/openai) | 62.4% | **2622** | 5.1B | Apache 2.0 |
+| [Devstral Small 2](https://huggingface.co/mistralai/Devstral-Small-2-2505) | 68.0% | -- | 24B | Apache 2.0 |
+| [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 62.4% | **2622** | 5.1B | Apache 2.0 |
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | -- | 2150 | 31B | Apache 2.0 |
 
 > SWE-bench = real bugs in real codebases. Codeforces = algorithmic competition. Different skills.
@@ -82,24 +76,24 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
 
 | Model | GPQA | Active |
 |-------|------|--------|
-| Gemma 4 31B | 84.3 | 31B |
-| Qwen3.5-9B | 81.7 | 9B |
-| GPT-OSS-120B | 80.9 | 5.1B |
-| Gemma 4 26B-A4B | 82.3 | 3.8B |
-| GLM-4.5-Air | 75.0 | 12B |
-| Nemotron 3 Nano | 73.0 | 3.5B |
-| Mistral Small 4 | 71.2 | 6B |
+| [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | 84.3 | 31B |
+| [Gemma 4 26B-A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) | 82.3 | 3.8B |
+| [Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) | 81.7 | 9B |
+| [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 80.9 | 5.1B |
+| [GLM-4.5-Air](https://huggingface.co/zai-org/GLM-4.5) | 75.0 | 12B |
+| [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | 73.0 | 3.5B |
+| [Mistral Small 4](https://huggingface.co/mistralai/Mistral-Small-4-128K) | 71.2 | 6B |
 
 #### Math (AIME)
 
 | Model | AIME | Conditions | Active |
 |-------|------|-----------|--------|
 | [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | **99.2%** | 2025, with tools | 3.5B |
-| GPT-OSS-120B | 96.6% | 2024, with tools | 5.1B |
-| GPT-OSS-20B | 96.0% | 2024, with tools | 3.6B |
-| Gemma 4 31B | 89.2% | 2026 | 31B |
-| Gemma 4 26B-A4B | 88.3% | 2026 | 3.8B |
-| Ministral 14B | 85.0% | 2025 | 14B |
+| [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 96.6% | 2024, with tools | 5.1B |
+| [GPT-OSS-20B](https://huggingface.co/openai/GPT-OSS-20B) | 96.0% | 2024, with tools | 3.6B |
+| [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | 89.2% | 2026 | 31B |
+| [Gemma 4 26B-A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) | 88.3% | 2026 | 3.8B |
+| [Ministral 14B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 85.0% | 2025 | 14B |
 | [Nemotron Nano 9B v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2) | 97.8% | MATH-500, /think mode | 9B |
 
 > AIME versions (2024/2025/2026) are not comparable. Each year is harder.
@@ -123,7 +117,7 @@ Models that run on smartphones, laptops, or edge devices.
 | Model | Max ctx | RULER 1M | Architecture | Active | License |
 |-------|---------|---------|-------------|--------|---------|
 | [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | 1M | **86.3%** | Mamba/MoE | 3.5B | Nemotron OML |
-| [Nemotron 3 Super](https://huggingface.co/nvidia) | 1M | -- | Mamba/MoE | 12B | Nemotron OML |
+| [Nemotron 3 Super](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) | 1M | -- | Mamba/MoE | 12B | Nemotron OML |
 | [Jamba 1.6 Mini](https://huggingface.co/ai21labs/Jamba-1.6-Mini) | 256K | -- | SSM+Transformer/MoE | 12B | Jamba OML |
 
 > Many models claim "1M context" without publishing RULER scores at that length. Without measurement, it's marketing.
@@ -146,11 +140,12 @@ Non-Transformer or hybrid models.
 
 | Model | miniF2F | PutnamBench | Active | License |
 |-------|---------|-----------|--------|---------|
-| [BFS-Prover-V2-32B](https://huggingface.co/ByteDance-Seed) | **95.0%** | -- | 32B | Apache 2.0 |
-| [Goedel-Prover-V2-32B](https://huggingface.co/Goedel-LM) | 90.4% | **#1** | 32B | Apache 2.0 |
-| [DeepSeek-Prover-V2-7B](https://huggingface.co/deepseek-ai) | 88.9% | -- | 7B | MIT |
-| [Kimina-Prover-72B](https://huggingface.co/MoonshotAI) | 84.0% | -- | 72B | MIT |
-| [Leanabell-Prover-V2-7B](https://huggingface.co/leanbell) | 78.2% | -- | 7B | Apache 2.0 |
+| [BFS-Prover-V2-32B](https://huggingface.co/ByteDance-Seed/BFS-Prover-V2) | **95.0%** | -- | 32B | Apache 2.0 |
+| [Goedel-Prover-V2-32B](https://huggingface.co/Goedel-LM/Goedel-Prover-V2-32B) | 90.4% | **#1** | 32B | Apache 2.0 |
+| [DeepSeek-Prover-V2-7B](https://huggingface.co/deepseek-ai/DeepSeek-Prover-V2-7B) | 88.9% | -- | 7B | MIT |
+| [Leanstral](https://huggingface.co/mistralai/Leanstral) | -- | -- | 32B | Apache 2.0 |
+| [Kimina-Prover-72B](https://huggingface.co/MoonshotAI/Kimina-Prover-Preview-Distill-72B) | 84.0% | -- | 72B | MIT |
+| [Leanabell-Prover-V2-7B](https://huggingface.co/leanbell/Leanabell-Prover-V2-7B) | 78.2% | -- | 7B | Apache 2.0 |
 
 > Lean 4 proofs are verified by the compiler. Either correct or rejected. Zero hallucination on mathematical correctness.
 
@@ -191,46 +186,6 @@ Non-Transformer or hybrid models.
 | [Strand-Rust-Coder-14B](https://huggingface.co/strand-ai/Strand-Rust-Coder-14B) | **0.50** | **0.43** | 14B | Apache 2.0 (base) |
 
 > Beats GPT-5-Codex and Claude Sonnet 4.5 on Rust benchmarks. Fine-tuned on 191K examples from 2,383 crates.
-
----
-
-## Non-LLM models
-
-### Embedding & retrieval
-
-| Model | Specialty | Multilingual | Active | License |
-|-------|----------|-------------|--------|---------|
-| [BGE-M3](https://huggingface.co/BAAI/bge-m3) | Dense + sparse + ColBERT | 100+ languages | 567M | MIT |
-| [Harrier-OSS-v1](https://huggingface.co/microsoft) | MTEB v2 SOTA | Multilingual | 270M-27B | MIT |
-| [Qwen3-Embedding](https://huggingface.co/Qwen) | Decoder-only, instruction-tuned | Multilingual | -- | Apache 2.0 |
-
-### Speech recognition (ASR)
-
-| Model | Specialty | License |
-|-------|----------|---------|
-| [Whisper](https://huggingface.co/openai/whisper-large-v3) | Standard reference, 99 languages | MIT |
-| [Qwen3-ASR](https://huggingface.co/Qwen) | Multilingual, decoder-based | Apache 2.0 |
-
-### Text-to-speech (TTS)
-
-| Model | Specialty | Active | License |
-|-------|----------|--------|---------|
-| [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) | #1 Arena, 82M params | 82M | Apache 2.0 |
-| [Fish Speech](https://huggingface.co/fishaudio) | VQGAN + LLM, zero-shot | -- | Apache 2.0 |
-
-### Image generation
-
-| Model | Specialty | License |
-|-------|----------|---------|
-| [FLUX](https://huggingface.co/black-forest-labs) | High-quality text-to-image | Apache 2.0 |
-| [Kolors](https://huggingface.co/Kwai-Kolors/Kolors) | Bilingual (CN/EN) | Apache 2.0 |
-
-### 3D generation
-
-| Model | Specialty | License |
-|-------|----------|---------|
-| [TRELLIS.2](https://huggingface.co/microsoft/TRELLIS-image-large) | Image/text to 3D | MIT |
-| [TripoSR](https://huggingface.co/stabilityai/TripoSR) | Fast single-image 3D | MIT |
 
 ---
 
