@@ -8,7 +8,7 @@ A curated list of open-weight AI models with commercially exploitable licenses, 
 2. **Total size < 200B** parameters
 3. **Released after April 2024**
 
-This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSeek V3/R1 (671B), and others. See [Rejected models](#rejected-models) for details.
+This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSeek V3/R1 (671B), and others. Note: Llama text-only models (3.3 70B, 3.2 1B/3B) are EU-exploitable. See [Rejected models](#rejected-models) for details.
 
 > Maintained by [Philippe Anel](https://philippe-anel.fr). Last updated: April 2026.
 
@@ -29,6 +29,7 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
   - [Search agents](#search-agents)
   - [Tool calling](#tool-calling)
   - [Rust](#rust)
+  - [Vision / Multimodal](#vision--multimodal)
 - [Observations](#observations)
 - [Benchmarks reference](#benchmarks-reference)
 - [Licenses](#licenses)
@@ -55,6 +56,8 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
 | [QwQ-32B](https://huggingface.co/Qwen/QwQ-32B) | Alibaba | 32B | 32B | Dense | 128K | Apache 2.0 | AIME ~80%, reasoning RL |
 | [DeepSeek R1-Distill-32B](https://huggingface.co/deepseek-ai/DeepSeek-R1) | DeepSeek | 32B | 32B | Dense | 128K | MIT | Beats o1-mini |
 | [Step-3.5-Flash](https://huggingface.co/stepfun-ai/Step-3.5-Flash) | StepFun | 11B | 196B | MoE | 262K | Apache 2.0 | SWE-bench 74.4%, 350 tok/s |
+| [Llama 3.3 70B](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) | Meta | 70B | 70B | Dense | 128K | Llama Community (EU OK) | MMLU 86.0, HumanEval 88.4, MATH 77.0 |
+| [InternVL3-78B](https://huggingface.co/OpenGVLab/InternVL3-78B) | Shanghai AI Lab | 78B | 78B | Dense | -- | Apache 2.0 | MMMU 72.2, SOTA open-source VLM |
 
 ### Code
 
@@ -91,6 +94,7 @@ Graduate-level questions in physics, chemistry, biology. Designed to be unsolvab
 | [GLM-4.5-Air](https://huggingface.co/zai-org/GLM-4.5) | 75.0 | 12B |
 | [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | 73.0 | 3.5B |
 | [Mistral Small 4](https://huggingface.co/mistralai/Mistral-Small-4-128K) | 71.2 | 6B |
+| [Llama 3.3 70B](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) | 50.5 | 70B |
 
 #### Math ([AIME](https://en.wikipedia.org/wiki/American_Invitational_Mathematics_Examination), 15 problems/year)
 
@@ -127,6 +131,10 @@ Models that run on smartphones, laptops, or edge devices.
 | [Ministral 3B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 3B | ~2 GB | Vision + reasoning, 256K ctx | Apache 2.0 |
 | [Ministral 8B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 8B | ~5 GB | AIME 78.7%, vision | Apache 2.0 |
 | [Ministral 14B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 14B | ~8 GB | AIME 85%, vision, 256K ctx | Apache 2.0 |
+| [LFM2.5-1.2B](https://huggingface.co/LiquidAI) | 1.2B | ~1 GB | IFBench 47.3 (2x Qwen3-1.7B), thinking, vision, audio | LFM Open v1.0 |
+| [Llama 3.2 1B/3B](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct) | 1-3B | < 2 GB | 128K ctx, edge/mobile, **EU OK** (text-only) | Llama Community |
+| [InternLM3-8B](https://huggingface.co/internlm/internlm3-8b-instruct) | 8B | ~5 GB | Thinking mode, 4T tokens (75% less training) | Apache 2.0 |
+| [InternVL3-1B→38B](https://huggingface.co/OpenGVLab/InternVL3-8B) | 1-38B | 1-20 GB | Vision SOTA, full range edge→server | Apache 2.0 |
 
 > SmolLM3-3B beats all other 3B models and competes with 4B models (Qwen3-4B, Gemma3-4B). Data quality matters more than model size: SmolLM2-1.7B trained on 11T tokens beats larger models trained on less data.
 
@@ -147,7 +155,7 @@ Non-Transformer or hybrid models.
 | Model | Architecture | Active | Key metric | License |
 |-------|-------------|--------|-----------|---------|
 | [Granite 4.0](https://huggingface.co/ibm-granite/granite-4.0-h-small) | 90% Mamba-2 / 10% Attention | 3-9B | 70% memory reduction, 2x speed | Apache 2.0 |
-| [LFM2](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | Convolutions + grouped attention | 2.3B | 112 tok/s CPU, 2x Qwen3 | LFM Open v1.0 |
+| [LFM2/2.5](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | Convolutions + grouped attention | 2.3B | 112 tok/s CPU, 2x Qwen3. LFM2.5: vision, audio, thinking | LFM Open v1.0 |
 | [Jamba 1.6 Mini](https://huggingface.co/ai21labs/Jamba-1.6-Mini) | Mamba + Transformer + MoE | 12B | 2.5x Transformer speed | Jamba OML |
 
 ---
@@ -211,6 +219,18 @@ Non-Transformer or hybrid models.
 
 > Beats GPT-5-Codex and Claude Sonnet 4.5 on Rust benchmarks. Fine-tuned on 191K examples from 2,383 crates.
 
+### Vision / Multimodal
+
+| Model | MMMU | Active | Key feature | License |
+|-------|------|--------|------------|---------|
+| [InternVL3-78B](https://huggingface.co/OpenGVLab/InternVL3-78B) | **72.2** | 78B | SOTA open-source VLM, custom InternViT | Apache 2.0 |
+| [InternVL3-1B→38B](https://huggingface.co/OpenGVLab/InternVL3-8B) | -- | 1-38B | Full range edge→server | Apache 2.0 |
+| [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | Pro 76.9 | 31B | Text + image + video | Apache 2.0 |
+| [Gemma 4 E2B/E4B](https://huggingface.co/google/gemma-4-E2B-it) | -- | 2.3-4.5B | Multimodal + audio, edge | Apache 2.0 |
+| [Qwen2.5-VL-7B](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | -- | 7B | Computer/phone use, DocVQA 95.7 | Apache 2.0 |
+
+> InternVL3-78B (72.2 MMMU) is on par with GPT-4o on multimodal. The InternViT encoder (300M–6B) is trained jointly with the LLM — not bolted on after the fact.
+
 ---
 
 ## Observations
@@ -219,11 +239,13 @@ Patterns observed across 60+ models. Not definitive truths.
 
 ### Architecture
 
-- **Dense dies above 35B.** Every model > 35B released in 2025-2026 is MoE. The quality/compute ratio of MoE has made dense obsolete at this scale.
+- **Dense dies above 35B.** Every model > 35B released in 2025-2026 is MoE. The last competitive denses at this scale are Llama 3.3 70B and DeepSeek R1-Distill-70B, both from late 2024/early 2025. No new dense > 35B has appeared since.
 
 - **Parameter count is no longer the determining factor.** Qwen3.5-9B (9B) beats GPT-OSS-120B (5.1B active, 117B total) on GPQA Diamond.
 
-- **The 40-79B segment is thinning out.** New models tend to jump from ~35B to ~120B total via MoE. The segment still has strong entries (Qwen 2.5-72B, R1-Distill-70B, Jamba 1.6 Mini 52B), but no new entrants in 2025-2026.
+- **The 40-79B segment is thinning out.** New models tend to jump from ~35B to ~120B total via MoE. The segment still has strong entries (Llama 3.3 70B, Qwen 2.5-72B, InternVL3-78B, R1-Distill-70B, Jamba 1.6 Mini 52B), but no new entrants in 2025-2026.
+
+- **InternVL3 is the best open-source VLM nobody was talking about.** InternVL3-78B (Shanghai AI Lab) reaches 72.2 MMMU under Apache 2.0 — on par with GPT-4o. InternLM3-8B achieves SOTA with 75% fewer training tokens (4T vs 15-18T). Less press than Alibaba, comparable results.
 
 - **Qwen is the de facto base model** for fine-tuning. BFS-Prover, Goedel-Prover, Kimina-Prover, most community distillations: all built on Qwen. The ResNet of LLMs.
 
@@ -249,9 +271,9 @@ Patterns observed across 60+ models. Not definitive truths.
 
 - **Gemma 4 under Apache 2.0 is a turning point.** Google moved from a restrictive custom license to standard open-source for the first time.
 
-- **Llama 4 excludes the EU** for multimodal models. The Llama-Nemotron-Super-49B inherits this exclusion despite NVIDIA's own license.
+- **Llama 4 excludes the EU** for multimodal models. But text-only Llama (3.3 70B, 3.2 1B/3B) is EU-exploitable — the exclusion only applies to multimodal.
 
-- **"Open-weight" is more nuanced than "open-source".** Llama 4 is technically open-weight but unexploitable in EU. Always check the fine print.
+- **"Open-weight" is more nuanced than "open-source".** Llama is technically open-weight but with geographic restrictions on multimodal. Always check the fine print.
 
 ---
 
@@ -305,7 +327,8 @@ What each benchmark measures, how many questions it has, and where to find more.
 | MIT | GLM-4.5-Air, DeepSeek R1-Distill, Phi-4 | Yes | Yes | No (implicit) | Yes |
 | Nemotron OML | Nemotron 3 Nano/Super | Yes | Yes | Yes | No |
 | Jamba OML | Jamba 1.6 | Yes | Yes | -- | No |
-| LFM Open v1.0 | LFM2 | Yes (< $10M) | Yes | -- | No |
+| Llama Community | Llama 3.3 70B, Llama 3.2 1B/3B (text-only) | Yes | **Yes** (text-only) | -- | No |
+| LFM Open v1.0 | LFM2, LFM2.5 | Yes (< $10M) | Yes | -- | No |
 
 ---
 
@@ -313,9 +336,10 @@ What each benchmark measures, how many questions it has, and where to find more.
 
 | Constraint | Recommendation |
 |-----------|---------------|
-| Smartphone / edge (< 4 GB) | SmolLM3-3B, SmolLM2-135M/360M/1.7B, Gemma 4 E2B, Phi-4-mini, Ministral 3B |
+| Smartphone / edge (< 4 GB) | SmolLM3-3B, SmolLM2-135M/360M/1.7B, Gemma 4 E2B, Phi-4-mini, Ministral 3B, LFM2.5-1.2B, Llama 3.2 1B/3B |
 | Laptop 16 GB | GPT-OSS-20B, Ministral 14B, Gemma 4 26B-A4B |
 | Desktop 24 GB | Gemma 4 31B, DeepSeek R1-Distill-32B, Devstral Small 2 |
+| Desktop 48+ GB (dense 70B) | Llama 3.3 70B (MMLU 86.0, EU OK), InternVL3-78B (vision) |
 | Server single-GPU (80 GB) | GPT-OSS-120B |
 | Server multi-GPU | Step-3.5-Flash, Nemotron 3 Super, Qwen3.5-122B |
 | Long context (> 256K) | Nemotron 3 Nano (1M, RULER 86.3%) |
@@ -333,8 +357,9 @@ What each benchmark measures, how many questions it has, and where to find more.
 
 | Model | License | Reason |
 |-------|---------|--------|
-| Llama 4 (Maverick, Scout) | Llama Community License | EU exclusion for multimodal models |
-| Llama-Nemotron-Super-49B | Llama 3.3 License | Inherits EU exclusion |
+| Llama 4 (Maverick, Scout) | Llama Community License | EU exclusion (multimodal) |
+| Llama 3.2 Vision 11B/90B | Llama Community License | EU exclusion (multimodal) |
+| Llama-Nemotron-Super-49B | Llama 3.3 License | Inherits EU exclusion (multimodal base) |
 | Qwen 3.6 Plus | Proprietary | Closed-source, API-only |
 | Codestral | Non-commercial | Research only |
 | Falcon 3 | Ambiguous | Potential 10% royalty |
