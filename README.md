@@ -68,11 +68,13 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
 | [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 62.4% | **2622** | 5.1B | Apache 2.0 |
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | -- | 2150 | 31B | Apache 2.0 |
 
-> SWE-bench = real bugs in real codebases. Codeforces = algorithmic competition. Different skills.
+> [SWE-bench](https://www.swebench.com/) = real bugs in real GitHub repos (Django, Flask, scikit-learn). 500 human-validated issues. [Codeforces](https://codeforces.com/) = algorithmic competition, ELO-scored like chess. Different skills: fixing a codebase vs solving a puzzle.
 
 ### Reasoning
 
-#### GPQA Diamond (doctoral-level, 198 questions)
+#### [GPQA Diamond](https://arxiv.org/abs/2311.12022) (198 questions)
+
+Graduate-level questions in physics, chemistry, biology. Designed to be unsolvable by Google search. Experts reach 65%, non-experts 34%. The most discriminating reasoning benchmark available.
 
 | Model | GPQA | Active |
 |-------|------|--------|
@@ -84,7 +86,9 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
 | [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | 73.0 | 3.5B |
 | [Mistral Small 4](https://huggingface.co/mistralai/Mistral-Small-4-128K) | 71.2 | 6B |
 
-#### Math (AIME)
+#### Math ([AIME](https://en.wikipedia.org/wiki/American_Invitational_Mathematics_Examination), 15 problems/year)
+
+Competition-level math requiring creativity and multi-step reasoning. Each year's edition is different and harder. Only compare within the same version.
 
 | Model | AIME | Conditions | Active |
 |-------|------|-----------|--------|
@@ -126,7 +130,7 @@ Models that run on smartphones, laptops, or edge devices.
 | [Nemotron 3 Super](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) | 1M | -- | Mamba/MoE | 12B | Nemotron OML |
 | [Jamba 1.6 Mini](https://huggingface.co/ai21labs/Jamba-1.6-Mini) | 256K | -- | SSM+Transformer/MoE | 12B | Jamba OML |
 
-> Many models claim "1M context" without publishing RULER scores at that length. Without measurement, it's marketing.
+> [RULER](https://arxiv.org/abs/2404.06654) ([GitHub](https://github.com/NVIDIA/RULER)) tests retrieval in long contexts with multiple needles, multi-hop tracing, and aggregation. Parametric by length (4K to 1M). Many models claim "1M context" without publishing RULER scores at that length. Without measurement, it's marketing.
 
 ### Alternative architectures
 
@@ -144,6 +148,8 @@ Non-Transformer or hybrid models.
 
 ### Theorem provers (Lean 4)
 
+[miniF2F](https://arxiv.org/abs/2109.00110) ([GitHub](https://github.com/facebookresearch/miniF2F)): 488 formal Olympiad-level math problems. Proofs are compiler-verified: either correct or rejected. Zero hallucination possible on mathematical correctness.
+
 | Model | miniF2F | PutnamBench | Active | License |
 |-------|---------|-----------|--------|---------|
 | [BFS-Prover-V2-32B](https://huggingface.co/ByteDance-Seed/BFS-Prover-V2) | **95.0%** | -- | 32B | Apache 2.0 |
@@ -158,6 +164,8 @@ Non-Transformer or hybrid models.
 > The sweet spot is 32B: BFS-Prover (95%) and Goedel-V2 (90.4%) both beat the 72B Kimina (84%).
 
 ### GUI agents
+
+[ScreenSpot](https://arxiv.org/abs/2504.07981) ([GitHub](https://github.com/likaixin2000/ScreenSpot-Pro-GUI-Grounding)): 1,200+ instructions across desktop, mobile, web. Tests if the model can locate the right UI element from a natural language instruction.
 
 | Model | ScreenSpot | OSWorld | Active | License |
 |-------|-----------|---------|--------|---------|
@@ -176,6 +184,8 @@ Non-Transformer or hybrid models.
 | [Search-R1](https://github.com/PeterGriffinJin/Search-R1) | Framework: teach any LLM to search (+26% on 7B) | any | Apache 2.0 |
 
 ### Tool calling
+
+[BFCL](https://gorilla.cs.berkeley.edu/leaderboard.html) ([GitHub](https://github.com/ShishirPatil/gorilla)): Berkeley Function Calling Leaderboard. Tests function/tool calling accuracy: correct names, parameters, types. V4 adds web search and memory.
 
 | Model | BFCL | Active | License |
 |-------|------|--------|---------|
