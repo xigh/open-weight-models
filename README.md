@@ -239,21 +239,43 @@ Patterns observed across 60+ models. Not definitive truths.
 
 ## Benchmarks reference
 
-What each benchmark measures and when to trust it.
+What each benchmark measures, how many questions it has, and where to find more.
 
-| Benchmark | Measures | Questions | Trust level |
-|-----------|---------|-----------|-------------|
-| GPQA Diamond | Doctoral reasoning | 198 | High (hard to game) |
-| MMLU-Pro | Broad knowledge | 12K | Medium (10 choices, harder than MMLU) |
-| AIME | Math competition | 30/year | High (but version-dependent) |
-| MATH-500 | Math reasoning | 500 | Medium |
-| SWE-bench Verified | Real bug fixing | 500 | High (real codebases) |
-| Codeforces | Algorithmic competition | Varies | High (ELO system) |
-| LiveCodeBench | Fresh coding problems | Rotating | High (not in training data) |
-| RULER | Long context retrieval | Varies | High (parametric by length) |
-| BFCL | Function/tool calling | 2K+ | High |
-| miniF2F | Theorem proving (Lean 4) | 488 | Very high (compiler-verified) |
-| ScreenSpot | GUI element grounding | 1.2K | High |
+### Reasoning & Knowledge
+
+- **[GPQA Diamond](https://arxiv.org/abs/2311.12022)** (198 questions) — Graduate-level questions in physics, chemistry, biology. Designed to be unsolvable by Google search. Experts reach 65%, non-experts 34%. The most discriminating reasoning benchmark.
+
+- **[MMLU-Pro](https://arxiv.org/abs/2406.01574)** (12K+ questions) — Hardened version of MMLU: 10 choices instead of 4, requires chain-of-thought reasoning. 14 domains. Drops accuracy 16-33% vs MMLU. Published at NeurIPS 2024.
+
+### Math
+
+- **AIME** (15 problems/year) — American Invitational Mathematics Examination. Competition-level math requiring creativity and multi-step reasoning. Each year's edition is harder. Only compare within the same version (2024/2025/2026).
+
+- **MATH-500** (500 problems) — Diverse math problems (algebra, geometry, combinatorics, number theory). Good general math evaluation but easier to saturate than AIME.
+
+### Code
+
+- **[SWE-bench Verified](https://www.swebench.com/)** (500 issues) — Real bugs from GitHub repos (Django, Flask, scikit-learn). The model must understand the codebase, find the bug, and produce a working patch. Human-validated by OpenAI. [Paper](https://arxiv.org/abs/2310.06770)
+
+- **Codeforces** (ELO system) — Algorithmic competition performance, scored like chess ELO. Measures pure algorithmic skill, not real-world coding. Different skill from SWE-bench.
+
+- **[LiveCodeBench](https://livecodebench.github.io/)** (rotating, 700+) — Fresh competitive programming problems collected after model training cutoffs. Eliminates data contamination. Problems from LeetCode, AtCoder, Codeforces. [GitHub](https://github.com/LiveCodeBench/LiveCodeBench)
+
+### Long context
+
+- **[RULER](https://arxiv.org/abs/2404.06654)** (parametric) — Sophisticated "needle in a haystack" with multiple needles, multi-hop tracing, and aggregation. Tests at different lengths (4K to 1M). By NVIDIA. Many models claiming 1M context fail above 32K. [GitHub](https://github.com/NVIDIA/RULER)
+
+### Agents & Tools
+
+- **[BFCL](https://gorilla.cs.berkeley.edu/leaderboard.html)** (2K+) — Berkeley Function Calling Leaderboard. Tests function/tool calling accuracy: correct names, parameters, types. V4 adds web search and memory. By UC Berkeley. [GitHub](https://github.com/ShishirPatil/gorilla)
+
+### Theorem proving
+
+- **[miniF2F](https://arxiv.org/abs/2109.00110)** (488 problems) — Formal Olympiad-level math problems in Lean 4 (also Isabelle, HOL Light). Covers AMC, AIME, IMO, and university math. Proofs are compiler-verified: either correct or rejected. Zero hallucination possible. [GitHub](https://github.com/facebookresearch/miniF2F)
+
+### GUI
+
+- **[ScreenSpot](https://arxiv.org/abs/2504.07981)** (1.2K+ instructions) — GUI element grounding across desktop, mobile, and web. Tests if the model can locate the right UI element from a natural language instruction. [GitHub](https://github.com/likaixin2000/ScreenSpot-Pro-GUI-Grounding)
 
 ---
 
