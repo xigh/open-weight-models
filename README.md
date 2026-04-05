@@ -1,6 +1,6 @@
 # Open Weight Models
 
-A curated list of open-weight AI models with commercially exploitable licenses, verified benchmarks, and no geographic restrictions.
+A curated list of open-weight AI models with commercially exploitable licenses, verified benchmarks, and no geographic restrictions. Built to decide which models to support in [herbert-rs](https://github.com/xigh/herbert-rs), a local LLM inference engine in Rust and hand-written assembly.
 
 **Selection criteria:**
 
