@@ -60,6 +60,8 @@ This excludes Llama 4 (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSe
 
 | Model | SWE-bench | Codeforces | Active | License |
 |-------|-----------|-----------|--------|---------|
+| *Claude Opus 4.6 (closed)* | *80.8%* | *--* | *--* | *--* |
+| *GPT-5.4 (closed)* | *~80%* | *--* | *--* | *--* |
 | [Step-3.5-Flash](https://huggingface.co/stepfun-ai/Step-3.5-Flash) | **74.4%** | -- | 11B | Apache 2.0 |
 | [Devstral 2](https://huggingface.co/mistralai/Devstral-2) | 72.2% | -- | ~12B | MIT modified |
 | [Qwen3-Coder-Next 80B-A3B](https://huggingface.co/Qwen/Qwen3-Coder-Next-80B-A3B) | 70.6% | -- | 3B | Apache 2.0 |
@@ -78,6 +80,8 @@ Graduate-level questions in physics, chemistry, biology. Designed to be unsolvab
 
 | Model | GPQA | Active |
 |-------|------|--------|
+| *GPT-5.4 (closed)* | *92.8* | *--* |
+| *Claude Opus 4.6 (closed)* | *91.3* | *--* |
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | 84.3 | 31B |
 | [Gemma 4 26B-A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) | 82.3 | 3.8B |
 | [Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) | 81.7 | 9B |
@@ -92,6 +96,8 @@ Competition-level math requiring creativity and multi-step reasoning. Each year'
 
 | Model | AIME | Conditions | Active |
 |-------|------|-----------|--------|
+| *GPT-5.4 (closed)* | *~100%* | *2025* | *--* |
+| *Claude Opus 4.6 (closed)* | *~98%* | *2025* | *--* |
 | [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | **99.2%** | 2025, with tools | 3.5B |
 | [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 96.6% | 2024, with tools | 5.1B |
 | [GPT-OSS-20B](https://huggingface.co/openai/GPT-OSS-20B) | 96.0% | 2024, with tools | 3.6B |
