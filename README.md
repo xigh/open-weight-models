@@ -140,6 +140,8 @@ Models that run on smartphones, laptops, or edge devices.
 
 > SmolLM3-3B beats all other 3B models and competes with 4B models (Qwen3-4B, Gemma3-4B). Data quality matters more than model size: SmolLM2-1.7B trained on 11T tokens beats larger models trained on less data.
 
+<a id="chocolatine"></a>
+
 > **Chocolatine-2-4B** (Jonathan Pacifico) is a DPO fine-tune of Qwen3-4B-Instruct-2507 on French preference datasets (Compar:IA from the French Ministry of Culture + French-ORCA), merged with TIES. Gains on every French benchmark tested (GPQA-FR, French MMLU, French Bench, FR-MT-Bench) without degrading English performance. One of the rare French-focused open-weight models built by an individual contributor rather than a lab.
 
 ### Long context
