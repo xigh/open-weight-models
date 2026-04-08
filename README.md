@@ -135,8 +135,11 @@ Models that run on smartphones, laptops, or edge devices.
 | [Llama 3.2 1B/3B](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct) | 1-3B | < 2 GB | 128K ctx, edge/mobile, **EU OK** (text-only) | Llama Community |
 | [InternLM3-8B](https://huggingface.co/internlm/internlm3-8b-instruct) | 8B | ~5 GB | Thinking mode, 4T tokens (75% less training) | Apache 2.0 |
 | [InternVL3-1B→38B](https://huggingface.co/OpenGVLab/InternVL3-8B) | 1-38B | 1-20 GB | Vision SOTA, full range edge→server | Apache 2.0 |
+| [Chocolatine-2-4B-DPO](https://huggingface.co/jpacifico/Chocolatine-2-4B-Instruct-DPO-v2.1) | 4B | ~2.5 GB | French-optimized DPO fine-tune of Qwen3-4B, 262K ctx, no `<think>` | Apache 2.0 |
 
 > SmolLM3-3B beats all other 3B models and competes with 4B models (Qwen3-4B, Gemma3-4B). Data quality matters more than model size: SmolLM2-1.7B trained on 11T tokens beats larger models trained on less data.
+
+> **Chocolatine-2-4B** (Jonathan Pacifico) is a DPO fine-tune of Qwen3-4B-Instruct-2507 on French preference datasets (Compar:IA from the French Ministry of Culture + French-ORCA), merged with TIES. Gains on every French benchmark tested (GPQA-FR, French MMLU, French Bench, FR-MT-Bench) without degrading English performance. One of the rare French-focused open-weight models built by an individual contributor rather than a lab.
 
 ### Long context
 
