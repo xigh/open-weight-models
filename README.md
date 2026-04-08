@@ -23,6 +23,7 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
   - [Compact / Edge](#compact--edge)
   - [Long context](#long-context)
   - [Alternative architectures](#alternative-architectures)
+  - [Decentralized training](#decentralized-training)
 - [Specialized](#specialized)
   - [Theorem provers (Lean 4)](#theorem-provers-lean-4)
   - [GUI agents](#gui-agents)
@@ -161,6 +162,39 @@ Non-Transformer or hybrid models.
 | [LFM2/2.5](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | Convolutions + grouped attention | 2.3B | 112 tok/s CPU, 2x Qwen3. LFM2.5: vision, audio, thinking | LFM Open v1.0 |
 | [Jamba 1.6 Mini](https://huggingface.co/ai21labs/Jamba-1.6-Mini) | Mamba + Transformer + MoE | 12B | 2.5x Transformer speed | Jamba OML |
 
+### Decentralized training
+
+Models pre-trained outside traditional data centers, using distributed peer-to-peer or blockchain-coordinated networks. The story is the training method, not the model quality.
+
+| Model | Method | Size | Tokens | Architecture | License |
+|-------|--------|------|--------|--------------|---------|
+| [Covenant-72B](https://arxiv.org/abs/2603.08163) | Permissionless P2P, SparseLoCo optimizer, Bittensor blockchain (Subnet 3) | 72B dense | 1.1T (+14.8B SFT) | LLaMA-3 style, GQA, 80 layers, d=8192, 64 heads, 8 KV heads, RoPE 500K, ctx 2048→8192 | Apache 2.0 (checkpoints) |
+
+**Pre-training benchmarks (0-shot)** vs other dense baselines :
+
+| Benchmark | Covenant-72B | LLaMA-2-70B (centralized) | LLM360 K2 (65B, centralized) | INTELLECT-1 (10B, P2P) |
+|-----------|-------------:|--------------------------:|-----------------------------:|-----------------------:|
+| ARC-Challenge | **56.8** | 57.4 | 53.8 | 44.8 |
+| ARC-Easy | **80.9** | 79.6 | 76.0 | 71.8 |
+| PIQA | 81.6 | 82.6 | 82.5 | 77.4 |
+| OpenBookQA | 44.0 | 49.4 | 48.0 | 43.8 |
+| HellaSwag | 80.6 | 84.3 | 82.9 | 70.3 |
+| WinoGrande | 75.9 | 80.4 | 76.4 | 63.3 |
+| MMLU | **67.1** | 65.6 | 65.5 | 32.7 |
+
+**Covenant-72B-Chat (post-SFT)** vs other chat models :
+
+| Benchmark | Covenant-72B-Chat | LLaMA-2-70B-Chat | K2-Chat (65B) |
+|-----------|------------------:|-----------------:|---------------:|
+| ARC-Challenge | 64.2 | 65.4 | 62.0 |
+| MMLU | 67.4 | 63.1 | 67.9 |
+| **IFEval** | **64.7** | 40.7 | 45.5 |
+| **MATH** | **26.3** | 10.7 | 19.1 |
+| MMLU-Pro | 40.9 | 35.2 | 45.4 |
+| GSM8K | 63.9 | 52.2 | 79.0 |
+
+> **Why it matters**: Covenant-72B is the first proof-of-concept that 72B-scale pre-training is possible without data centers, with peers joining and leaving freely. Coordination via the Bittensor blockchain (Subnet 3), communication via SparseLoCo (146× compression vs dense gradients), peers running 8×B200 GPUs over commodity internet (500 Mb/s down, 110 Mb/s up). The model achieves **94.5% compute utilization** despite the network constraints, with an average of 16.9 contributing peers per round and 70+ unique peers over the run. On benchmarks, it beats LLaMA-2-70B on ARC-Challenge, ARC-Easy and MMLU (despite 1.8× fewer training tokens), and the chat variant has the best IFEval and MATH scores in its comparison group. It's the first credible alternative to the data-center duopoly for pre-training at 70B scale. Authors: Covenant AI + Mila. See [arXiv 2603.08163](https://arxiv.org/abs/2603.08163).
+
 ---
 
 ## Specialized
@@ -242,15 +276,17 @@ Patterns observed across 60+ models. Not definitive truths.
 
 ### Architecture
 
-- **Dense dies above 35B.** Every model > 35B released in 2025-2026 is MoE. The last competitive denses at this scale are Llama 3.3 70B and DeepSeek R1-Distill-70B, both from late 2024/early 2025. No new dense > 35B has appeared since.
+- **Dense retreats above 35B, but doesn't die.** For generalists above 35B, MoE clearly dominates (GPT-OSS-120B, Mistral Small 4, Qwen3.5-122B-A10B, GLM-4.5-Air, Step-3.5-Flash, Nemotron 3 Super, all MoE). But dense survives where it has a structural advantage: Llama 3.3 70B (generalist), InternVL3-78B (vision), Kimina-Prover-72B (theorem proving), Qwen 2.5-72B (production NLP), Covenant-72B (decentralized training), DeepSeek R1-Distill-70B (distilled reasoning). Dense is becoming a specialization choice.
 
 - **Parameter count is no longer the determining factor.** Qwen3.5-9B (9B) beats GPT-OSS-120B (5.1B active, 117B total) on GPQA Diamond.
 
-- **The 40-79B segment is thinning out.** New models tend to jump from ~35B to ~120B total via MoE. The segment still has strong entries (Llama 3.3 70B, Qwen 2.5-72B, InternVL3-78B, R1-Distill-70B, Jamba 1.6 Mini 52B), but no new entrants in 2025-2026.
+- **The 40-79B segment is the dense survivors' refuge.** New models often jump from ~35B straight to ~120B total via MoE. But the 40-79B range is well populated by quality dense models (Llama 3.3 70B, InternVL3-78B, Kimina-Prover-72B, Qwen 2.5-72B, Covenant-72B, R1-Distill-70B, Jamba 1.6 Mini 52B). This is where dense resists, and where you find both solid generalists and specialists.
 
 - **InternVL3 is the best open-source VLM nobody was talking about.** InternVL3-78B (Shanghai AI Lab) reaches 72.2 MMMU under Apache 2.0 — on par with GPT-4o. InternLM3-8B achieves SOTA with 75% fewer training tokens (4T vs 15-18T). Less press than Alibaba, comparable results.
 
 - **Qwen is the de facto base model** for fine-tuning. BFS-Prover, Goedel-Prover, Kimina-Prover, most community distillations: all built on Qwen. The ResNet of LLMs.
+
+- **Decentralized pre-training is no longer a toy.** Covenant-72B (Mar 2026) pre-trained a 72B dense LLaMA-3-style model over a permissionless blockchain network (Bittensor Subnet 3) on 1.1T tokens. It beats LLaMA-2-70B on ARC-Challenge, ARC-Easy and MMLU despite 1.8× fewer training tokens, with 94.5% compute utilization over commodity internet (500/110 Mb/s) and dynamic peer participation. The data-center duopoly for pre-training at 70B scale now has a credible alternative. SparseLoCo + 2-bit quantization gives 146× compression on gradient communication.
 
 ### Benchmarks
 
