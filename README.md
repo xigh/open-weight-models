@@ -12,6 +12,8 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 
 > Maintained by [Philippe Anel](https://philippe-anel.fr). Last updated: April 2026.
 
+> **v2 additions (April 2026)** — Generalists: GLM-4.7-Flash, Hermes 4-70B. Code: NousCoder-14B, OmniCoder-9B (new LCB/Terminal-Bench subsection). Compact/Edge: Pleias-RAG-1B, Pleias-3B. Reasoning/Math: Qwen2.5-Math-72B (historical). Alternative architectures: URM. Decentralized training: Hermes 4.3-36B-Psyche. Theorem provers: Nomos 1 (natural-language track).
+
 ---
 
 ## Table of Contents
@@ -19,6 +21,7 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 - [LLMs](#llms)
   - [Generalists](#generalists)
   - [Code](#code)
+    - [Code — LiveCodeBench & Terminal-Bench](#code--livecodebench--terminal-bench)
   - [Reasoning](#reasoning)
   - [Compact / Edge](#compact--edge)
   - [Long context](#long-context)
@@ -26,6 +29,7 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
   - [Decentralized training](#decentralized-training)
 - [Specialized](#specialized)
   - [Theorem provers (Lean 4)](#theorem-provers-lean-4)
+    - [Natural-language provers (not Lean 4)](#natural-language-provers-not-lean-4)
   - [GUI agents](#gui-agents)
   - [Search agents](#search-agents)
   - [Tool calling](#tool-calling)
@@ -54,10 +58,12 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 | [GPT-OSS-20B](https://huggingface.co/openai/GPT-OSS-20B) | OpenAI | 3.6B | 21B | MoE | 128K | Apache 2.0 | AIME 96%, fits 16GB |
 | [Mistral Small 4](https://huggingface.co/mistralai/Mistral-Small-4-128K) | Mistral | 6B | 119B | MoE | 256K | Apache 2.0 | GPQA 71.2, unified instruct/reasoning/coding |
 | [GLM-4.5-Air](https://huggingface.co/zai-org/GLM-4.5) | Zhipu AI | 12B | 106B | MoE | 128K | MIT | MATH-500 98.1%, MMLU-Pro 81.4 |
+| [GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash) | Zhipu AI | 3B | 30B | MoE (MLA) | 200K | MIT | SWE-bench 59.2, AIME25 91.6, GPQA 75.2 |
 | [QwQ-32B](https://huggingface.co/Qwen/QwQ-32B) | Alibaba | 32B | 32B | Dense | 128K | Apache 2.0 | AIME ~80%, reasoning RL |
 | [DeepSeek R1-Distill-32B](https://huggingface.co/deepseek-ai/DeepSeek-R1) | DeepSeek | 32B | 32B | Dense | 128K | MIT | Beats o1-mini |
 | [Step-3.5-Flash](https://huggingface.co/stepfun-ai/Step-3.5-Flash) | StepFun | 11B | 196B | MoE | 262K | Apache 2.0 | SWE-bench 74.4%, 350 tok/s |
 | [Llama 3.3 70B](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) | Meta | 70B | 70B | Dense | 128K | Llama Community (EU OK) | MMLU 86.0, HumanEval 88.4, MATH 77.0 |
+| [Hermes 4-70B](https://huggingface.co/NousResearch/Hermes-4-70B) | Nous Research | 70B | 70B | Dense | 128K | Llama Community (EU OK) | SOTA RefusalBench, hybrid reasoning, tool calling |
 | [InternVL3-78B](https://huggingface.co/OpenGVLab/InternVL3-78B) | Shanghai AI Lab | 78B | 78B | Dense | -- | Apache 2.0 | MMMU 72.2, SOTA open-source VLM |
 
 ### Code
@@ -72,10 +78,25 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 | [Qwen3-Coder-Next 80B-A3B](https://huggingface.co/Qwen/Qwen3-Coder-Next-80B-A3B) | 70.6% | -- | 3B | Apache 2.0 |
 | [Qwen2.5-Coder-32B](https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct) | 69.6% | -- | 32B | Apache 2.0 |
 | [Devstral Small 2](https://huggingface.co/mistralai/Devstral-Small-2-2505) | 68.0% | -- | 24B | Apache 2.0 |
+| [GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash) | 59.2% | -- | 3B | MIT |
 | [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 62.4% | **2622** | 5.1B | Apache 2.0 |
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | -- | 2150 | 31B | Apache 2.0 |
 
 > [SWE-bench](https://www.swebench.com/) = real bugs in real GitHub repos (Django, Flask, scikit-learn). 500 human-validated issues. [Codeforces](https://codeforces.com/) = algorithmic competition, ELO-scored like chess. Different skills: fixing a codebase vs solving a puzzle.
+
+#### Code — LiveCodeBench & Terminal-Bench
+
+Specialized coders measured on benchmarks other than SWE-bench.
+
+| Model | LiveCodeBench v6 | Terminal-Bench 2.0 | Active | License |
+|-------|-----------------|--------------------|--------|---------|
+| [OmniCoder-9B](https://huggingface.co/Tesslate/OmniCoder-9B) | -- | **23.6%** | 9.4B | Apache 2.0 |
+| [NousCoder-14B](https://huggingface.co/NousResearch/NousCoder-14B) | **67.87%** | -- | 14.8B | Apache 2.0 |
+| Qwen3.5-9B (baseline) | 60.79% | 14.6% | 9B | Apache 2.0 |
+
+> **[LiveCodeBench](https://livecodebench.github.io/)** (rotating ≈700 problems from LeetCode/AtCoder/Codeforces, collected after model cutoffs) measures fresh competitive programming, vs SWE-bench (fixing real-world bugs) and Codeforces ELO (pure algorithms). **[Terminal-Bench 2.0](https://www.tbench.ai/)** measures agentic coding skills (read-before-write, LSP responsiveness, minimal diffs).
+
+> OmniCoder-9B is a **LoRA agentic fine-tune** of Qwen3.5-9B on 425K Claude Opus 4.6 / GPT-5.4 / Gemini 3.1 Pro trajectories — +61% relative on Terminal-Bench vs base. NousCoder-14B is a **pure-RL fine-tune** of Qwen3-14B (+7.08 pts on LCB v6, no SFT). Same 9-14B class, opposite methods.
 
 ### Reasoning
 
@@ -112,8 +133,11 @@ Competition-level math requiring creativity and multi-step reasoning. Each year'
 | [Gemma 4 26B-A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) | 88.3% | 2026 | 3.8B |
 | [Ministral 14B](https://huggingface.co/mistralai/Ministral-3-14B-Reasoning-2512) | 85.0% | 2025 | 14B |
 | [Nemotron Nano 9B v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2) | 97.8% | MATH-500, /think mode | 9B |
+| [Qwen2.5-Math-72B](https://huggingface.co/Qwen/Qwen2.5-Math-72B-Instruct) | 40.0% | 2024, TIR (Python) | 72B |
 
 > AIME versions (2024/2025/2026) are not comparable. Each year is harder.
+
+> **Qwen2.5-Math (Sep 2024)** is the first open model to make real AIME progress (12/30 on AIME 2024 — 6× GPT-4 Turbo at the time). Since surpassed by generalists (Nemotron, GPT-OSS 96%+). Historical reference, still useful for its **TIR mode** (Tool-Integrated Reasoning with Python interpreter) which eliminates arithmetic errors. Qwen License, not Apache — commercial OK but check terms.
 
 ### Compact / Edge
 
@@ -137,12 +161,17 @@ Models that run on smartphones, laptops, or edge devices.
 | [InternLM3-8B](https://huggingface.co/internlm/internlm3-8b-instruct) | 8B | ~5 GB | Thinking mode, 4T tokens (75% less training) | Apache 2.0 |
 | [InternVL3-1B→38B](https://huggingface.co/OpenGVLab/InternVL3-8B) | 1-38B | 1-20 GB | Vision SOTA, full range edge→server | Apache 2.0 |
 | [Chocolatine-2-4B-DPO](https://huggingface.co/jpacifico/Chocolatine-2-4B-Instruct-DPO-v2.1) | 4B | ~2.5 GB | French-optimized DPO fine-tune of Qwen3-4B, 262K ctx, no `<think>` | Apache 2.0 |
+| [Pleias-RAG-1B](https://huggingface.co/PleIAs/Pleias-RAG-1B) | 1.2B | ~1 GB | **100% public-domain training data**, native citation with literal quotes, EU multilingual | Apache 2.0 |
+| [Pleias-RAG-350M](https://huggingface.co/PleIAs/Pleias-RAG-350M) | 350M | < 1 GB | Same as Pleias-RAG-1B, ultra-compact | Apache 2.0 |
+| [Baguettotron](https://huggingface.co/PleIAs/Baguettotron) | 0.3B | < 1 GB | Latest Pleias base (Dec 2025), French-focused SLM | Apache 2.0 |
 
 > SmolLM3-3B beats all other 3B models and competes with 4B models (Qwen3-4B, Gemma3-4B). Data quality matters more than model size: SmolLM2-1.7B trained on 11T tokens beats larger models trained on less data.
 
 <a id="chocolatine"></a>
 
 > **Chocolatine-2-4B** (Jonathan Pacifico) is a DPO fine-tune of Qwen3-4B-Instruct-2507 on French preference datasets (Compar:IA from the French Ministry of Culture + French-ORCA), merged with TIES. Gains on every French benchmark tested (GPQA-FR, French MMLU, French Bench, FR-MT-Bench) without degrading English performance. One of the rare French-focused open-weight models built by an individual contributor rather than a lab.
+
+> **Pleias** (Paris-based lab, partners with NVIDIA and Mozilla Builders) trains exclusively on **public-domain or CC-licensed data** (Common Corpus, 2T tokens). Raw benchmark scores trail Qwen/Gemma of equivalent size, but the trade-off is unique: **zero copyright ambiguity** (EU AI Act / GDPR friendly), strong EU multilingual (FR, DE, IT, ES, NL, PL), and the Pleias-RAG variants emit **literal-quote citations** natively. Positioned for regulated sectors (public, legal, press, education) where data provenance matters more than peak scores.
 
 ### Long context
 
@@ -163,6 +192,9 @@ Non-Transformer or hybrid models.
 | [Granite 4.0](https://huggingface.co/ibm-granite/granite-4.0-h-small) | 90% Mamba-2 / 10% Attention | 3-9B | 70% memory reduction, 2x speed | Apache 2.0 |
 | [LFM2/2.5](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | Convolutions + grouped attention | 2.3B | 112 tok/s CPU, 2x Qwen3. LFM2.5: vision, audio, thinking | LFM Open v1.0 |
 | [Jamba 1.6 Mini](https://huggingface.co/ai21labs/Jamba-1.6-Mini) | Mamba + Transformer + MoE | 12B | 2.5x Transformer speed | Jamba OML |
+| [URM](https://github.com/UbiquantAI/URM) | Recursive Universal Transformer (ConvSwiGLU + TBPTL) | 4× params (tiny) | ARC-AGI 1: **53.8%**, Sudoku 77.6% | Open-source (research) |
+
+> **URM** (Ubiquant, Dec 2025) loops its 4 layers 12× instead of stacking 48 distinct layers. With **4× parameters** it reaches 53.8% on ARC-AGI 1 where a vanilla Transformer with 32× parameters stays under 40%. Key claim of the paper: **the FFN, not attention, is the source of reasoning** — counterintuitive given the community's focus on attention variants. Research model, not a production LLM, but architecturally interesting for future LLM designs. See [arXiv:2512.14693](https://arxiv.org/abs/2512.14693).
 
 ### Decentralized training
 
@@ -171,6 +203,7 @@ Models pre-trained outside traditional data centers, using distributed peer-to-p
 | Model | Method | Size | Tokens | Architecture | License |
 |-------|--------|------|--------|--------------|---------|
 | [Covenant-72B](https://arxiv.org/abs/2603.08163) | Permissionless P2P, SparseLoCo optimizer, Bittensor blockchain (Subnet 3) | 72B dense | 1.1T (+14.8B SFT) | LLaMA-3 style, GQA, 80 layers, d=8192, 64 heads, 8 KV heads, RoPE 500K, ctx 2048→8192 | Apache 2.0 (checkpoints) |
+| [Hermes 4.3-36B-Psyche](https://huggingface.co/NousResearch/Hermes-4.3-36B) | Internet-decentralized fine-tuning via [Psyche](https://psyche.network) | 36B dense | — (post-training on Seed-36B) | ByteDance Seed-36B base, Llama-3 chat template, hybrid `<think>` mode | Apache 2.0 |
 
 **Pre-training benchmarks (0-shot)** vs other dense baselines :
 
@@ -195,7 +228,9 @@ Models pre-trained outside traditional data centers, using distributed peer-to-p
 | MMLU-Pro | 40.9 | 35.2 | 45.4 |
 | GSM8K | 63.9 | 52.2 | 79.0 |
 
-> **Why it matters**: Covenant-72B is the first proof-of-concept that 72B-scale pre-training is possible without data centers, with peers joining and leaving freely. Coordination via the Bittensor blockchain (Subnet 3), communication via SparseLoCo (146× compression vs dense gradients), peers running 8×B200 GPUs over commodity internet (500 Mb/s down, 110 Mb/s up). The model achieves **94.5% compute utilization** despite the network constraints, with an average of 16.9 contributing peers per round and 70+ unique peers over the run. On benchmarks, it beats LLaMA-2-70B on ARC-Challenge, ARC-Easy and MMLU (despite 1.8× fewer training tokens), and the chat variant has the best IFEval and MATH scores in its comparison group. It's the first credible alternative to the data-center duopoly for pre-training at 70B scale. Authors: Covenant AI + Mila. See [arXiv 2603.08163](https://arxiv.org/abs/2603.08163).
+> **Hermes 4.3-36B-Psyche** (Nous Research, Nov 2025) is a different point in the same space: not pre-training from scratch but **post-training decentralized over internet**. Built on ByteDance's Seed-36B, fine-tuned via Nous's [Psyche network](https://psyche.network), released under Apache 2.0. The Psyche variant **matches or beats the centralized 4.3-36B twin on every benchmark** (AIME25 69.3 vs 66.8, MMLU-Pro 80.7 vs 79.7) — decentralized post-training did not degrade quality. Complements Covenant: two different decentralization angles (pre-training at 72B / post-training at 36B).
+
+> **Why Covenant matters**: Covenant-72B is the first proof-of-concept that 72B-scale pre-training is possible without data centers, with peers joining and leaving freely. Coordination via the Bittensor blockchain (Subnet 3), communication via SparseLoCo (146× compression vs dense gradients), peers running 8×B200 GPUs over commodity internet (500 Mb/s down, 110 Mb/s up). The model achieves **94.5% compute utilization** despite the network constraints, with an average of 16.9 contributing peers per round and 70+ unique peers over the run. On benchmarks, it beats LLaMA-2-70B on ARC-Challenge, ARC-Easy and MMLU (despite 1.8× fewer training tokens), and the chat variant has the best IFEval and MATH scores in its comparison group. It's the first credible alternative to the data-center duopoly for pre-training at 70B scale. Authors: Covenant AI + Mila. See [arXiv 2603.08163](https://arxiv.org/abs/2603.08163).
 
 ---
 
@@ -217,6 +252,16 @@ Models pre-trained outside traditional data centers, using distributed peer-to-p
 > Lean 4 proofs are verified by the compiler. Either correct or rejected. Zero hallucination on mathematical correctness.
 
 > The sweet spot is 32B: BFS-Prover (95%) and Goedel-V2 (90.4%) both beat the 72B Kimina (84%).
+
+#### Natural-language provers (not Lean 4)
+
+A parallel track: models that write proofs in natural English, not formal Lean 4. Not compiler-verified, but closer to how mathematicians actually work.
+
+| Model | Benchmark | Active | Total | License |
+|-------|-----------|--------|-------|---------|
+| [Nomos 1](https://huggingface.co/NousResearch/nomos-1) | Putnam 2025: **87/120 (72.5%)** with Nomos Harness | ~3B | ~30B | Apache 2.0 |
+
+> **Nomos 1** (Nous Research × Hillclimb AI, Dec 2025) is a Qwen3-30B-A3B-Thinking fine-tune specialized for **natural-language proof writing**, not Lean 4. On Putnam 2025 with the open-sourced [Nomos Reasoning Harness](https://github.com/NousResearch/nomos), it jumps from 24/120 (base) to 87/120 — a +63 point gain where the inference harness matters as much as the model. Complementary to the Lean provers above, which offer compiler-verification guarantees that natural-language proofs cannot.
 
 ### GUI agents
 
@@ -364,12 +409,13 @@ What each benchmark measures, how many questions it has, and where to find more.
 
 | License | Models | Commercial | EU | Patent grant | OSI |
 |---------|--------|-----------|-----|-------------|-----|
-| Apache 2.0 | Gemma 4, Qwen 3/3.5, GPT-OSS, Ministral, Step-3.5-Flash | Yes | Yes | Yes | Yes |
-| MIT | GLM-4.5-Air, DeepSeek R1-Distill, Phi-4 | Yes | Yes | No (implicit) | Yes |
+| Apache 2.0 | Gemma 4, Qwen 3/3.5, GPT-OSS, Ministral, Step-3.5-Flash, NousCoder, OmniCoder, Nomos 1, URM, Hermes 4.3-36B, Pleias (all variants), Baguettotron | Yes | Yes | Yes | Yes |
+| MIT | GLM-4.5-Air, GLM-4.7-Flash, DeepSeek R1-Distill, Phi-4 | Yes | Yes | No (implicit) | Yes |
 | Nemotron OML | Nemotron 3 Nano/Super | Yes | Yes | Yes | No |
 | Jamba OML | Jamba 1.6 | Yes | Yes | -- | No |
-| Llama Community | Llama 3.3 70B, Llama 3.2 1B/3B (text-only) | Yes | **Yes** (text-only) | -- | No |
+| Llama Community | Llama 3.3 70B, Llama 3.2 1B/3B (text-only), Hermes 4-70B | Yes | **Yes** (text-only) | -- | No |
 | LFM Open v1.0 | LFM2, LFM2.5 | Yes (< $10M) | Yes | -- | No |
+| Qwen License | Qwen2.5-Math | Yes | Yes | -- | No |
 
 ---
 
@@ -379,7 +425,7 @@ What each benchmark measures, how many questions it has, and where to find more.
 |-----------|---------------|
 | Smartphone / edge (< 4 GB) | SmolLM3-3B, SmolLM2-135M/360M/1.7B, Gemma 4 E2B, Phi-4-mini, Ministral 3B, LFM2.5-1.2B, Llama 3.2 1B/3B |
 | Laptop 16 GB | GPT-OSS-20B, Ministral 14B, Gemma 4 26B-A4B |
-| Desktop 24 GB | Gemma 4 31B, DeepSeek R1-Distill-32B, Devstral Small 2 |
+| Desktop 24 GB | Gemma 4 31B, DeepSeek R1-Distill-32B, Devstral Small 2, **GLM-4.7-Flash Q4** (agent coding on RTX 4090) |
 | Desktop 48+ GB (dense 70B) | Llama 3.3 70B (MMLU 86.0, EU OK), InternVL3-78B (vision) |
 | Server single-GPU (80 GB) | GPT-OSS-120B |
 | Server multi-GPU | Step-3.5-Flash, Nemotron 3 Super, Qwen3.5-122B |
@@ -388,7 +434,13 @@ What each benchmark measures, how many questions it has, and where to find more.
 | Code (real bugs) | Step-3.5-Flash, Devstral Small 2 |
 | Code (competition) | GPT-OSS-120B (Codeforces 2622) |
 | Multilingual (100+ langs) | Qwen 3.5 (201), Qwen 3 (119) |
-| Theorem proving | BFS-Prover-V2-32B (95% miniF2F) |
+| Theorem proving (Lean 4) | BFS-Prover-V2-32B (95% miniF2F) |
+| Theorem proving (natural language) | Nomos 1 (Putnam 2025: 87/120 with harness) |
+| RAG with literal citations | Pleias-RAG-1B (native citation, 1B) |
+| Copyright-safe training data | Pleias (100% public domain / CC) |
+| Agent coding (laptop) | OmniCoder-9B (Terminal-Bench 23.6%), GLM-4.7-Flash Q4 |
+| Competitive coding (LCB) | NousCoder-14B (LCB v6 67.87%) |
+| Uncensored generalist | Hermes 4-70B (SOTA RefusalBench) |
 | GUI automation | UI-TARS-1.5-7B (94.2% ScreenSpot) |
 | Throughput | Step-3.5-Flash (350 tok/s) |
 
