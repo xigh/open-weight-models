@@ -5,13 +5,15 @@ A curated list of open-weight AI models with commercially exploitable licenses, 
 **Selection criteria:**
 
 1. **Commercially exploitable license**, no geographic restriction (EU ok)
-2. **Total size < 200B** parameters
+2. **VRAM Q4 ≤ 128 GB** (main) — what fits Q4-quantized on a single high-end workstation. An **extended tier** (128 < Q4 ≤ 256 GB) flags models that require a Mac Studio M3 Ultra or multi-GPU server.
 3. **Released after April 2024**
 
-This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), full DeepSeek V3/R1 (671B), and others. Note: Llama text-only models (3.3 70B, 3.2 1B/3B) are EU-exploitable. See [Rejected models](#rejected-models) for details.
+This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), DeepSeek V3/R1 full (671B → ~370 GB Q4, beyond 256 GB), and others. Note: Llama text-only models (3.3 70B, 3.2 1B/3B) are EU-exploitable. See [Rejected models](#rejected-models) for details.
 
-> Maintained by [Philippe Anel](https://philippe-anel.fr). Last updated: April 2026.
+> Maintained by [Philippe Anel](https://philippe-anel.fr). Last updated: May 2026.
 
+> **v3 additions (May 2026)** — Selection criterion switched from "< 200B params" to "VRAM Q4 ≤ 128 GB" + extended 256 GB tier (better proxy for what's actually runnable on consumer/prosumer hardware). Generalists: Ling-2.6-flash 104B/A7.4B (Ant), Mistral Medium 3.5 128B (🔴 Modified MIT), MiniMax M2.7 230B/A10B. Extended tier: DeepSeek-V4-Flash 284B/A13B (1M ctx native, FP4+FP8). Alternative architectures: ZAYA1-8B (Zyphra), Kimi-Linear 48B/A3B (Moonshot, KDA hybrid), Bonsai-8B (1-bit end-to-end, 1.15 GB). Vision/Multimodal: Nemotron 3 Nano Omni 30B-A3B, DeepSeek-OCR + DeepSeek-OCR-2. Compact/Edge: LFM2.5-VL-450M (vision edge). Theorem provers: SGS algorithm (Stanford, 7B beats 671B pass@4 on D3k). New license row: 🔴 **Modified MIT** with explicit warning.
+>
 > **v2 additions (April 2026)** — Generalists: GLM-4.7-Flash, Hermes 4-70B. Code: NousCoder-14B, OmniCoder-9B (new LCB/Terminal-Bench subsection). Compact/Edge: Pleias-RAG-1B, Pleias-3B. Reasoning/Math: Qwen2.5-Math-72B (historical). Alternative architectures: URM. Decentralized training: Hermes 4.3-36B-Psyche. Theorem provers: Nomos 1 (natural-language track).
 
 ---
@@ -20,6 +22,7 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 
 - [LLMs](#llms)
   - [Generalists](#generalists)
+    - [Extended tier (128 < Q4 ≤ 256 GB)](#extended-tier-128--q4--256-gb)
   - [Code](#code)
     - [Code — LiveCodeBench & Terminal-Bench](#code--livecodebench--terminal-bench)
   - [Reasoning](#reasoning)
@@ -59,12 +62,31 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 | [Mistral Small 4](https://huggingface.co/mistralai/Mistral-Small-4-128K) | Mistral | 6B | 119B | MoE | 256K | Apache 2.0 | GPQA 71.2, unified instruct/reasoning/coding |
 | [GLM-4.5-Air](https://huggingface.co/zai-org/GLM-4.5) | Zhipu AI | 12B | 106B | MoE | 128K | MIT | MATH-500 98.1%, MMLU-Pro 81.4 |
 | [GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash) | Zhipu AI | 3B | 30B | MoE (MLA) | 200K | MIT | SWE-bench 59.2, AIME25 91.6, GPQA 75.2 |
+| [Ling-2.6-flash](https://huggingface.co/inclusionAI/Ling-2.6-flash) | Ant Group | 7.4B | 104B | MoE (hybrid linear attn 1:7 MLA+Lightning) | 262K | MIT | Token-efficient agent (~15M tokens on full AA suite vs 40-100M for long-reasoners) |
 | [QwQ-32B](https://huggingface.co/Qwen/QwQ-32B) | Alibaba | 32B | 32B | Dense | 128K | Apache 2.0 | AIME ~80%, reasoning RL |
 | [DeepSeek R1-Distill-32B](https://huggingface.co/deepseek-ai/DeepSeek-R1) | DeepSeek | 32B | 32B | Dense | 128K | MIT | Beats o1-mini |
 | [Step-3.5-Flash](https://huggingface.co/stepfun-ai/Step-3.5-Flash) | StepFun | 11B | 196B | MoE | 262K | Apache 2.0 | SWE-bench 74.4%, 350 tok/s |
 | [Llama 3.3 70B](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) | Meta | 70B | 70B | Dense | 128K | Llama Community (EU OK) | MMLU 86.0, HumanEval 88.4, MATH 77.0 |
 | [Hermes 4-70B](https://huggingface.co/NousResearch/Hermes-4-70B) | Nous Research | 70B | 70B | Dense | 128K | Llama Community (EU OK) | SOTA RefusalBench, hybrid reasoning, tool calling |
 | [InternVL3-78B](https://huggingface.co/OpenGVLab/InternVL3-78B) | Shanghai AI Lab | 78B | 78B | Dense | -- | Apache 2.0 | MMMU 72.2, SOTA open-source VLM |
+| [Mistral Medium 3.5 128B](https://huggingface.co/mistralai/Mistral-Medium-3.5-128B) | Mistral AI | 128B | 128B | Dense + Pixtral vision | 256K | 🔴 **Modified MIT** (revenue cap) | First Mistral merged flagship: Medium 3.1 + Magistral + Devstral 2 unified, configurable `reasoning_effort` |
+| [MiniMax M2.7](https://huggingface.co/MiniMaxAI/MiniMax-M2.7) | MiniMax AI | 10B | 230B | MoE (256 experts, 8 active, 4.3% ratio) | ~200K | MIT *(verify on HF)* | Agentic workflows alt to Claude Opus 4.6 / GPT-5.3-Codex, IQ1_M @ 60.7 GB |
+
+> **🔴 License warning — Modified MIT (revenue/MAU caps).** Mistral Medium 3.5 falls under a Mistral Open License variant with a revenue threshold; MiniMax M2.7 and Kimi K2.5 historically shipped with similar caps (100M MAU for Kimi). They are **listed for completeness** but you must read the actual license before any commercial deployment — these are **not interchangeable with Apache 2.0/MIT**. The revenue/MAU clauses can flip a free model into a paid one once your product takes off.
+
+> **Mistral Medium 3.5** (Apr/May 2026) is the **first merged flagship** from Mistral: a single set of weights unifying what used to be three distinct models — Medium 3.1 (instruct), Magistral (reasoning), Devstral 2 (coding agent). Behavior switches via `reasoning_effort` per request (`none` / `high`). Replaces Medium 3.1 + Magistral in Le Chat and Devstral 2 in Vibe CLI. 88-layer dense (no MoE), Pixtral vision tower trained from scratch.
+
+> **MiniMax M2.7** (Apr 2026 open-weight release) pushes the **active/total ratio** to 4.3% (10B/230B), targeting agentic long-running workflows (coding, multi-step troubleshooting, document editing). Positioned as open-weight alternative to Claude Opus 4.6 / GPT-5.3-Codex with IQ1_M weights at 60.7 GB making 230B practically deployable on a single workstation.
+
+#### Extended tier (128 < Q4 ≤ 256 GB)
+
+Models that exceed the 128 GB Q4 main cap but fit a 256 GB workstation (Mac Studio M3 Ultra max, multi-GPU server).
+
+| Model | Publisher | Active | Total | Arch | Ctx | License | Key scores |
+|-------|-----------|--------|-------|------|-----|---------|-----------|
+| [DeepSeek-V4-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash) | DeepSeek | 13B | 284B | MoE (hybrid CSA+HCA, mHC, Muon optimizer) | **1M** native | MIT | First < 200B-active LLM with native 1M ctx, FP4+FP8 mixed, 32T pre-train, 27% FLOPs / 10% KV cache vs V3.2 |
+
+> **DeepSeek-V4-Flash** (May 2026) is the small sibling of V4-Pro (1.6T/49B). Q4 ≈ 156 GB. Three inference modes integrated in the chat template: non-think, think-high, think-max (recommended at ≥ 384K context). The architecture introduces three new ideas — hybrid attention (CSA + HCA), multi-head computation (mHC), and the Muon optimizer — pushing the efficiency frontier rather than the parameter frontier.
 
 ### Code
 
@@ -164,6 +186,8 @@ Models that run on smartphones, laptops, or edge devices.
 | [Pleias-RAG-1B](https://huggingface.co/PleIAs/Pleias-RAG-1B) | 1.2B | ~1 GB | **100% public-domain training data**, native citation with literal quotes, EU multilingual | Apache 2.0 |
 | [Pleias-RAG-350M](https://huggingface.co/PleIAs/Pleias-RAG-350M) | 350M | < 1 GB | Same as Pleias-RAG-1B, ultra-compact | Apache 2.0 |
 | [Baguettotron](https://huggingface.co/PleIAs/Baguettotron) | 0.3B | < 1 GB | Latest Pleias base (Dec 2025), French-focused SLM | Apache 2.0 |
+| [LFM2.5-VL-450M](https://huggingface.co/LiquidAI) | 450M | < 1 GB | **Vision edge**: SigLIP2 + 512×512 native, object detection, WebGPU | LFM Open v1.0 |
+| [Bonsai-8B](https://github.com/PrismML-Eng/Bonsai-demo) | 8B | **1.15 GB** | 1-bit Qwen3-8B fine-tune, CUDA/Metal/CPU/Android/iPhone | Apache 2.0 |
 
 > SmolLM3-3B beats all other 3B models and competes with 4B models (Qwen3-4B, Gemma3-4B). Data quality matters more than model size: SmolLM2-1.7B trained on 11T tokens beats larger models trained on less data.
 
@@ -179,6 +203,7 @@ Models that run on smartphones, laptops, or edge devices.
 |-------|---------|---------|-------------|--------|---------|
 | [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | 1M | **86.3%** | Mamba/MoE | 3.5B | Nemotron OML |
 | [Nemotron 3 Super](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) | 1M | -- | Mamba/MoE | 12B | Nemotron OML |
+| [DeepSeek-V4-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash) *(extended tier)* | **1M native** | -- | MoE (CSA+HCA hybrid) | 13B | MIT |
 | [Jamba 1.6 Mini](https://huggingface.co/ai21labs/Jamba-1.6-Mini) | 256K | -- | SSM+Transformer/MoE | 12B | Jamba OML |
 
 > [RULER](https://arxiv.org/abs/2404.06654) ([GitHub](https://github.com/NVIDIA/RULER)) tests retrieval in long contexts with multiple needles, multi-hop tracing, and aggregation. Parametric by length (4K to 1M). Many models claim "1M context" without publishing RULER scores at that length. Without measurement, it's marketing.
@@ -193,8 +218,17 @@ Non-Transformer or hybrid models.
 | [LFM2/2.5](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | Convolutions + grouped attention | 2.3B | 112 tok/s CPU, 2x Qwen3. LFM2.5: vision, audio, thinking | LFM Open v1.0 |
 | [Jamba 1.6 Mini](https://huggingface.co/ai21labs/Jamba-1.6-Mini) | Mamba + Transformer + MoE | 12B | 2.5x Transformer speed | Jamba OML |
 | [URM](https://github.com/UbiquantAI/URM) | Recursive Universal Transformer (ConvSwiGLU + TBPTL) | 4× params (tiny) | ARC-AGI 1: **53.8%**, Sudoku 77.6% | Open-source (research) |
+| [ZAYA1-8B](https://huggingface.co/Zyphra/ZAYA1-8B) | Hybrid Mamba + Compressed Cross Attention (CCA) + MoD + EDA | 760M / 8.4B (**9% active**) | On-device deployable, test-time-compute friendly, 128K ctx | Apache 2.0 |
+| [Kimi-Linear-48B-A3B](https://huggingface.co/moonshotai/Kimi-Linear-48B-A3B-Instruct) | MoE hybrid: 3 KDA (linear) layers per 1 MLA (global) | 3B / 48B | **1M context**, 5.7T tokens, demonstrates linear attention can match full attention | MIT |
+| [Bonsai-8B](https://github.com/PrismML-Eng/Bonsai-demo) | Qwen3-8B fine-tuned at **1-bit end-to-end** (GGUF Q1_0), all projections + LM head 1-bit | 8.19B | **1.15 GB on disk** (14.2× FP16), runs on CPU/Android/iPhone | Apache 2.0 |
 
 > **URM** (Ubiquant, Dec 2025) loops its 4 layers 12× instead of stacking 48 distinct layers. With **4× parameters** it reaches 53.8% on ARC-AGI 1 where a vanilla Transformer with 32× parameters stays under 40%. Key claim of the paper: **the FFN, not attention, is the source of reasoning** — counterintuitive given the community's focus on attention variants. Research model, not a production LLM, but architecturally interesting for future LLM designs. See [arXiv:2512.14693](https://arxiv.org/abs/2512.14693).
+
+> **ZAYA1-8B** (Zyphra, May 2026) is a Zamba-2 successor: 80 layers mixing SSM-Mamba and attention, with **Compressed Cross Attention (CCA)** plus **Mixture-of-Depths (MoD)** and **Expert Decision Attention (EDA)** on top of 16 top-1 experts. The angle is *intelligence per active parameter*: 760M actifs gives sub-1B inference cost while keeping 8B-class capacity. Positioned for on-device + thinking-mode workflows where compute scales with active params, not totals. Tech report on [zyphra.com/zaya1-8b-technical-report](https://www.zyphra.com/zaya1-8b-technical-report).
+
+> **Kimi-Linear** (Moonshot, Oct 2025, [arXiv:2510.26692](https://arxiv.org/abs/2510.26692)) is Moonshot's open research vehicle for **linear attention** outside the closed K2 family. The architecture is a 3:1 ratio of **KDA (Kimi Delta Attention, linear)** to **MLA (full attention, global)** layers. The point isn't frontier performance — it's the demonstration that linear attention can **match full attention across short, long, and RL-style regimes** while reducing memory cost. Useful baseline for engine work like herbert-rs.
+
+> **Bonsai-8B** (Prism ML, Mar 2026) is a **1-bit end-to-end** fine-tune of Qwen3-8B: every projection + the LM head quantized to 1 bit (GGUF Q1_0), shrinking the deployed model to **1.15 GB**. Direct competitor to BitNet, but trained as a *fine-tune* rather than natively 1.58-bit from scratch. Runs on CUDA, Metal, Android, CPU, and iPhone (via Locally AI). The radical end of the quantization spectrum — accept the quality drop in exchange for ubiquity.
 
 ### Decentralized training
 
@@ -245,6 +279,7 @@ Models pre-trained outside traditional data centers, using distributed peer-to-p
 | [BFS-Prover-V2-32B](https://huggingface.co/ByteDance-Seed/BFS-Prover-V2) | **95.0%** | -- | 32B | Apache 2.0 |
 | [Goedel-Prover-V2-32B](https://huggingface.co/Goedel-LM/Goedel-Prover-V2-32B) | 90.4% | **#1** | 32B | Apache 2.0 |
 | [DeepSeek-Prover-V2-7B](https://huggingface.co/deepseek-ai/DeepSeek-Prover-V2-7B) | 88.9% | -- | 7B | MIT |
+| [DeepSeek-Prover-V2-7B + SGS](https://github.com/LukeBailey181/sgs) | -- | -- | 7B | MIT (model) / CC-BY-4.0 (paper) |
 | [Leanstral](https://huggingface.co/mistralai/Leanstral) | -- | -- | 32B | Apache 2.0 |
 | [Kimina-Prover-72B](https://huggingface.co/MoonshotAI/Kimina-Prover-Preview-Distill-72B) | 84.0% | -- | 72B | MIT |
 | [Leanabell-Prover-V2-7B](https://huggingface.co/leanbell/Leanabell-Prover-V2-7B) | 78.2% | -- | 7B | Apache 2.0 |
@@ -252,6 +287,8 @@ Models pre-trained outside traditional data centers, using distributed peer-to-p
 > Lean 4 proofs are verified by the compiler. Either correct or rejected. Zero hallucination on mathematical correctness.
 
 > The sweet spot is 32B: BFS-Prover (95%) and Goedel-V2 (90.4%) both beat the 72B Kimina (84%).
+
+> **SGS — Self-Guided Self-Play** (Stanford, [arXiv:2604.20209](https://arxiv.org/abs/2604.20209), Apr 2026) is not a model but an RL self-play **algorithm** applied to DeepSeek-Prover-V2-7B. After 200 rounds and 6.3M generations, **the 7B fine-tune surpasses the pass@4 of DeepSeek-Prover-V2-671B on D3k** (3 323 Lean 4 problems from Goedel-Pset-V1). Caveat: D3k is the SGS run's own training-target set, not a held-out public benchmark like miniF2F or PutnamBench — the 7B-beats-671B headline is real for in-distribution problems, scope-restricted otherwise. Demonstrates that **well-tuned RL can collapse a 100× parameter gap** on a target dataset. Authors: Bailey, Wen, Dong, Hashimoto, Ma.
 
 #### Natural-language provers (not Lean 4)
 
@@ -312,8 +349,13 @@ A parallel track: models that write proofs in natural English, not formal Lean 4
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | Pro 76.9 | 31B | Text + image + video | Apache 2.0 |
 | [Gemma 4 E2B/E4B](https://huggingface.co/google/gemma-4-E2B-it) | -- | 2.3-4.5B | Multimodal + audio, edge | Apache 2.0 |
 | [Qwen2.5-VL-7B](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | -- | 7B | Computer/phone use, DocVQA 95.7 | Apache 2.0 |
+| [Nemotron 3 Nano Omni 30B-A3B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-Omni-30B-A3B) | -- | 3B | **any-to-any** (text+audio+image+video → text), 256K ctx, Mamba-Transformer hybrid MoE | Nemotron OML |
+| [DeepSeek-OCR](https://huggingface.co/deepseek-ai/DeepSeek-OCR) | -- | 3.3B | **OCR specialist** — *Contexts Optical Compression*: encode long text as compressed image, feed books/papers as pixels not tokens | MIT |
+| [DeepSeek-OCR-2](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2) | -- | 3.4B | OCR v2 with **Visual Causal Flow** (sequential reading order) | Apache 2.0 |
 
 > InternVL3-78B (72.2 MMMU) is on par with GPT-4o on multimodal. The InternViT encoder (300M–6B) is trained jointly with the LLM — not bolted on after the fact.
+
+> **Nemotron 3 Nano Omni** (NVIDIA, Apr 2026) extends the Nano family with native audio/video/image inputs. Targets enterprise document intelligence (contracts, SOW/MSA, finance), customer service (drive-thru order verification, delivery video OCR), GUI/browser/email agents, and dense video captioning. Stack of three components around the Nano LLM (vision encoder + audio encoder + LLM), not a monolithic any-to-any architecture. English-only. See [arXiv:2604.24954](https://arxiv.org/abs/2604.24954).
 
 ---
 
@@ -409,12 +451,13 @@ What each benchmark measures, how many questions it has, and where to find more.
 
 | License | Models | Commercial | EU | Patent grant | OSI |
 |---------|--------|-----------|-----|-------------|-----|
-| Apache 2.0 | Gemma 4, Qwen 3/3.5, GPT-OSS, Ministral, Step-3.5-Flash, NousCoder, OmniCoder, Nomos 1, URM, Hermes 4.3-36B, Pleias (all variants), Baguettotron | Yes | Yes | Yes | Yes |
-| MIT | GLM-4.5-Air, GLM-4.7-Flash, DeepSeek R1-Distill, Phi-4 | Yes | Yes | No (implicit) | Yes |
-| Nemotron OML | Nemotron 3 Nano/Super | Yes | Yes | Yes | No |
+| Apache 2.0 | Gemma 4, Qwen 3/3.5, GPT-OSS, Ministral, Step-3.5-Flash, NousCoder, OmniCoder, Nomos 1, URM, ZAYA1, Bonsai, DeepSeek-OCR-2, Hermes 4.3-36B, Pleias (all variants), Baguettotron | Yes | Yes | Yes | Yes |
+| MIT | GLM-4.5-Air, GLM-4.7-Flash, DeepSeek R1-Distill, DeepSeek-V4-Flash, DeepSeek-OCR (v1), Ling-2.6-flash, Kimi-Linear, MiniMax M2.7 *(verify on HF)*, Phi-4 | Yes | Yes | No (implicit) | Yes |
+| 🔴 **Modified MIT** (revenue/MAU caps) | **Mistral Medium 3.5** (revenue cap), historically Kimi K2.5 (100M MAU), MiniMax M2.5 | Conditional | Conditional | -- | No |
+| Nemotron OML | Nemotron 3 Nano/Super, Nemotron 3 Nano Omni | Yes | Yes | Yes | No |
 | Jamba OML | Jamba 1.6 | Yes | Yes | -- | No |
 | Llama Community | Llama 3.3 70B, Llama 3.2 1B/3B (text-only), Hermes 4-70B | Yes | **Yes** (text-only) | -- | No |
-| LFM Open v1.0 | LFM2, LFM2.5 | Yes (< $10M) | Yes | -- | No |
+| LFM Open v1.0 | LFM2, LFM2.5, LFM2.5-VL | Yes (< $10M) | Yes | -- | No |
 | Qwen License | Qwen2.5-Math | Yes | Yes | -- | No |
 
 ---
@@ -428,8 +471,17 @@ What each benchmark measures, how many questions it has, and where to find more.
 | Desktop 24 GB | Gemma 4 31B, DeepSeek R1-Distill-32B, Devstral Small 2, **GLM-4.7-Flash Q4** (agent coding on RTX 4090) |
 | Desktop 48+ GB (dense 70B) | Llama 3.3 70B (MMLU 86.0, EU OK), InternVL3-78B (vision) |
 | Server single-GPU (80 GB) | GPT-OSS-120B |
-| Server multi-GPU | Step-3.5-Flash, Nemotron 3 Super, Qwen3.5-122B |
-| Long context (> 256K) | Nemotron 3 Nano (1M, RULER 86.3%) |
+| Server multi-GPU | Step-3.5-Flash, Nemotron 3 Super, Qwen3.5-122B, Ling-2.6-flash 104B |
+| Workstation 256 GB (extended tier) | DeepSeek-V4-Flash 284B/A13B (native 1M ctx, FP4+FP8) |
+| Long context (> 256K) | Nemotron 3 Nano (1M, RULER 86.3%), DeepSeek-V4-Flash (1M native) |
+| Token-efficient agent loops | Ling-2.6-flash (15M tokens on full AA suite) |
+| On-device + thinking mode | ZAYA1-8B (760M active, 8.4B total) |
+| Multimodal any-to-any | Nemotron 3 Nano Omni 30B-A3B (text+audio+image+video) |
+| OCR / long-doc compression | DeepSeek-OCR-2 (Apache 2.0, *Optical Compression*) |
+| Linear-attention research baseline | Kimi-Linear 48B/A3B (1M ctx, KDA + MLA hybrid) |
+| Extreme quantization (mobile) | Bonsai-8B (1-bit, 1.15 GB) |
+| Vision on edge (< 1 GB) | LFM2.5-VL-450M |
+| RL self-play research (Lean) | DeepSeek-Prover-V2-7B + SGS (Stanford) |
 | Math | Nemotron Nano 9B v2 (/think mode), GPT-OSS-120B |
 | Code (real bugs) | Step-3.5-Flash, Devstral Small 2 |
 | Code (competition) | GPT-OSS-120B (Codeforces 2622) |
@@ -456,10 +508,10 @@ What each benchmark measures, how many questions it has, and where to find more.
 | Qwen 3.6 Plus | Proprietary | Closed-source, API-only |
 | Codestral | Non-commercial | Research only |
 | Falcon 3 | Ambiguous | Potential 10% royalty |
-| Kimi K2.5 | Modified MIT (100M MAU) | User threshold |
-| MiniMax M2.5 | Modified MIT | Custom restrictions |
-| DeepSeek V3/R1 (full) | MIT | > 200B total (671B) |
-| Qwen 3 235B / Qwen 3.5 397B | Apache 2.0 | > 200B total |
+| Kimi K2.5 | 🔴 Modified MIT (100M MAU) | Listed-with-warning candidate; left out pending updated fiche — see warning callout in [Generalists](#generalists) for the principle |
+| DeepSeek V3/R1 full (671B) | MIT | Q4 ≈ 370 GB, beyond 256 GB extended cap |
+| DeepSeek-V4-Pro (1.6T/49B) | MIT | Q4 ≈ 800 GB, datacenter only |
+| Qwen 3 235B / Qwen 3.5 397B | Apache 2.0 | 235B Q4 ≈ 130 GB and 397B Q4 ≈ 218 GB technically fit extended tier — left out as MoE generalist territory is already covered by Ling-2.6-flash 104B and DeepSeek-V4-Flash with better efficiency |
 
 ---
 
