@@ -417,6 +417,27 @@ Patterns observed across 60+ models. Not definitive truths.
 
 - **Domain-specific models (medical, legal, finance) are less mature** than code/math specialists. Generalists often outperform them on domain benchmarks. Specialization helps mainly for specific vocabulary, regulatory compliance, and private data fine-tuning.
 
+### Inference acceleration — MTP / speculative decoding (built-in)
+
+**Multi-Token Prediction (MTP)** is becoming standard for open-weight MoE ≥ 100B in 2025-2026: a small extra prediction module is trained jointly with the main model and reused at inference as a built-in **draft path for speculative decoding**. No external drafter required. Among the models listed here:
+
+| Model | MTP at training? | MTP at inference? | Variant |
+|-------|------------------|-------------------|---------|
+| [DeepSeek-V4-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash) (extended) | Yes (V3 lineage) | Yes | Sequential modules, λ schedule 0.3→0.1 in decay |
+| [Step-3.5-Flash 196B](https://huggingface.co/stepfun-ai/Step-3.5-Flash) | Yes | **Yes — MTP-3 active** | 3 drafted tokens per forward |
+| [Nemotron 3 Super 120B-A12B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) | Yes | Yes | Shared-weight MTP head as internal draft |
+| [MiniMax M2.7 230B](https://huggingface.co/MiniMaxAI/MiniMax-M2.7) | Yes (K=1) | **Yes (K=3)** | Expanded K=1→K=3 via weight copying in decay (DeepSeek-V3 schedule) |
+| [Gemma 4 family](https://huggingface.co/google) (E2B / E4B / 12B Unified / 26B-A4B / 31B) | No | Yes — **post-hoc drafter** | Separate 4-layer Q-only model reading target's KV cache (`gemma-4-X-it-assistant`) |
+
+**Pattern.** Two doctrines coexist:
+
+- **MoE ≥ 100B**: MTP shipped *inside* the model (DeepSeek-V3 / Step / Nemotron / MiniMax). MiniMax M2.7 replicates DeepSeek-V3's exact training schedule (λ=0.3→0.1) — convergence on hyperparameters across labs.
+- **Gemma 4**: MTP shipped as a *separate post-hoc drafter* model — same speedup ceiling (~1.5-3× lossless), but the drafter is an artifact you load independently.
+
+**Why this matters for inference engine choice (herbert-rs et al.).** A model that ships with MTP gives 1.5-3× throughput out of the box on supported frameworks (vLLM, SGLang, MLX, llama.cpp community) — no drafter to source, train, or quantization-match. Running an MTP-equipped model without spec-decode support is leaving 50-200% throughput on the table.
+
+> Source: per-model HF cards + DeepSeek-V3 paper + MiniMax-M2 tech report ([arXiv:2605.26494](https://arxiv.org/abs/2605.26494) §2.3) + Gemma 4 Google blog. Detailed taxonomy: Sebastian Raschka, *LLM Architecture Gallery — MTP* ([sebastianraschka.com/llm-architecture-gallery/mtp/](https://sebastianraschka.com/llm-architecture-gallery/mtp/)) + Gloeckle et al. 2024 ([arXiv:2404.19737](https://arxiv.org/abs/2404.19737)) for the founding paper.
+
 ### Licenses
 
 - **Gemma 4 under Apache 2.0 is a turning point.** Google moved from a restrictive custom license to standard open-source for the first time.
@@ -504,6 +525,7 @@ What each benchmark measures, how many questions it has, and where to find more.
 | Extreme quantization (mobile) | Bonsai-8B (1-bit, 1.15 GB) |
 | Vision on edge (< 1 GB) | LFM2.5-VL-450M |
 | RL self-play research (Lean) | DeepSeek-Prover-V2-7B + SGS (Stanford) |
+| Built-in MTP / speculative decoding | Step-3.5-Flash (MTP-3), MiniMax M2.7 (K=3), Nemotron 3 Super, DeepSeek-V4-Flash; **Gemma 4** with post-hoc drafter |
 | Mobile MLLM (< 1.5 GB) | MiniCPM-V 4.6 (1.2B, iOS/Android/HarmonyOS) |
 | Encoder-free multimodal | Gemma 4 12B Unified (text+image+audio, no separate encoders) |
 | Unified gen+understanding (image/video) | Lance 3B (ByteDance) |
