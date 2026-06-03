@@ -10,8 +10,10 @@ A curated list of open-weight AI models with commercially exploitable licenses, 
 
 This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), DeepSeek V3/R1 full (671B → ~370 GB Q4, beyond 256 GB), and others. Note: Llama text-only models (3.3 70B, 3.2 1B/3B) are EU-exploitable. See [Rejected models](#rejected-models) for details.
 
-> Maintained by [Philippe Anel](https://philippe-anel.fr). Last updated: May 2026.
+> Maintained by [Philippe Anel](https://philippe-anel.fr). Last updated: June 2026.
 
+> **v4 additions (June 2026)** — Generalists: Gemma 4 12B Unified (encoder-free multimodal, AIME 2026 77.5 / LCB v6 72.0). Code (LCB/Terminal-Bench): Mellum 2 12B-A2.5B (JetBrains, LCB v6 69.9 with 2.5B active). Compact/Edge: MiniCPM-V 4.6 (1.2B mobile-first MLLM). Vision/Multimodal: Lance (ByteDance, unified any-to-any 3B, gen + understanding + editing). Alternative architectures: HRM-Text-1B (Sapient, Hierarchical Reasoning Model, recurrent dual-timescale). **New section**: Web world models with WebWorld 8B/14B/32B (Qwen, predicts next page state, beats GPT-4o on Factuality).
+>
 > **v3 additions (May 2026)** — Selection criterion switched from "< 200B params" to "VRAM Q4 ≤ 128 GB" + extended 256 GB tier (better proxy for what's actually runnable on consumer/prosumer hardware). Generalists: Ling-2.6-flash 104B/A7.4B (Ant), Mistral Medium 3.5 128B (🔴 Modified MIT), MiniMax M2.7 230B/A10B. Extended tier: DeepSeek-V4-Flash 284B/A13B (1M ctx native, FP4+FP8). Alternative architectures: ZAYA1-8B (Zyphra), Kimi-Linear 48B/A3B (Moonshot, KDA hybrid), Bonsai-8B (1-bit end-to-end, 1.15 GB). Vision/Multimodal: Nemotron 3 Nano Omni 30B-A3B, DeepSeek-OCR + DeepSeek-OCR-2. Compact/Edge: LFM2.5-VL-450M (vision edge). Theorem provers: SGS algorithm (Stanford, 7B beats 671B pass@4 on D3k). New license row: 🔴 **Modified MIT** with explicit warning.
 >
 > **v2 additions (April 2026)** — Generalists: GLM-4.7-Flash, Hermes 4-70B. Code: NousCoder-14B, OmniCoder-9B (new LCB/Terminal-Bench subsection). Compact/Edge: Pleias-RAG-1B, Pleias-3B. Reasoning/Math: Qwen2.5-Math-72B (historical). Alternative architectures: URM. Decentralized training: Hermes 4.3-36B-Psyche. Theorem provers: Nomos 1 (natural-language track).
@@ -34,6 +36,7 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
   - [Theorem provers (Lean 4)](#theorem-provers-lean-4)
     - [Natural-language provers (not Lean 4)](#natural-language-provers-not-lean-4)
   - [GUI agents](#gui-agents)
+  - [Web world models](#web-world-models)
   - [Search agents](#search-agents)
   - [Tool calling](#tool-calling)
   - [Rust](#rust)
@@ -54,6 +57,7 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 | Model | Publisher | Active | Total | Arch | Ctx | License | Key scores |
 |-------|-----------|--------|-------|------|-----|---------|-----------|
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | Google | 31B | 31B | Dense | 256K | Apache 2.0 | GPQA 84.3, MMLU-Pro 85.2 |
+| [Gemma 4 12B Unified](https://huggingface.co/google/gemma-4-12B-it) | Google | 11.95B | 11.95B | Dense **encoder-free** multimodal | 256K | Apache 2.0 | GPQA 78.8, MMLU-Pro 77.2, AIME 2026 77.5, LCB v6 72.0, **audio natif** (CoVoST 38.5) |
 | [Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) | Alibaba | 27B | 27B | Dense | 128K | Apache 2.0 | 201 languages |
 | [Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) | Alibaba | 9B | 9B | Dense | 128K | Apache 2.0 | GPQA 81.7 (9B!) |
 | [Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) | Alibaba | 10B | 122B | MoE | 256K | Apache 2.0 | 201 languages, multimodal |
@@ -114,11 +118,14 @@ Specialized coders measured on benchmarks other than SWE-bench.
 |-------|-----------------|--------------------|--------|---------|
 | [OmniCoder-9B](https://huggingface.co/Tesslate/OmniCoder-9B) | -- | **23.6%** | 9.4B | Apache 2.0 |
 | [NousCoder-14B](https://huggingface.co/NousResearch/NousCoder-14B) | **67.87%** | -- | 14.8B | Apache 2.0 |
+| [Mellum 2 12B-A2.5B](https://huggingface.co/JetBrains/Mellum2-12B-A2.5B-Thinking) | **69.9** | -- | 2.5B (MoE 64 experts top-8) | Apache 2.0 |
 | Qwen3.5-9B (baseline) | 60.79% | 14.6% | 9B | Apache 2.0 |
 
 > **[LiveCodeBench](https://livecodebench.github.io/)** (rotating ≈700 problems from LeetCode/AtCoder/Codeforces, collected after model cutoffs) measures fresh competitive programming, vs SWE-bench (fixing real-world bugs) and Codeforces ELO (pure algorithms). **[Terminal-Bench 2.0](https://www.tbench.ai/)** measures agentic coding skills (read-before-write, LSP responsiveness, minimal diffs).
 
 > OmniCoder-9B is a **LoRA agentic fine-tune** of Qwen3.5-9B on 425K Claude Opus 4.6 / GPT-5.4 / Gemini 3.1 Pro trajectories — +61% relative on Terminal-Bench vs base. NousCoder-14B is a **pure-RL fine-tune** of Qwen3-14B (+7.08 pts on LCB v6, no SFT). Same 9-14B class, opposite methods.
+
+> **Mellum 2** (JetBrains, May 2026) is the second generation after Mellum 1 (4B dense, 2024) — this time a **MoE 12B/A2.5B** post-trained in SFT + **RLVR** (Reinforcement Learning with Verifiable Rewards). JetBrains publishes **6 checkpoints** exposing each pipeline stage (Base-Pretrain, Base, Instruct-SFT, Thinking-SFT, Instruct, Thinking) for research transparency — rare among IDE vendors. **LCB v6 69.9 with 2.5B active** is exceptional in the 9-14B class; the active-param efficiency makes it a natural fit for in-IDE inference.
 
 ### Reasoning
 
@@ -187,6 +194,7 @@ Models that run on smartphones, laptops, or edge devices.
 | [Pleias-RAG-350M](https://huggingface.co/PleIAs/Pleias-RAG-350M) | 350M | < 1 GB | Same as Pleias-RAG-1B, ultra-compact | Apache 2.0 |
 | [Baguettotron](https://huggingface.co/PleIAs/Baguettotron) | 0.3B | < 1 GB | Latest Pleias base (Dec 2025), French-focused SLM | Apache 2.0 |
 | [LFM2.5-VL-450M](https://huggingface.co/LiquidAI) | 450M | < 1 GB | **Vision edge**: SigLIP2 + 512×512 native, object detection, WebGPU | LFM Open v1.0 |
+| [MiniCPM-V 4.6](https://huggingface.co/openbmb/MiniCPM-V-4.6) | 1.2B | < 1 GB | **Mobile-first MLLM** (Qwen3.5-0.8B + SigLIP2-400M), text + image + video, iOS/Android/HarmonyOS native patches | Apache 2.0 |
 | [Bonsai-8B](https://github.com/PrismML-Eng/Bonsai-demo) | 8B | **1.15 GB** | 1-bit Qwen3-8B fine-tune, CUDA/Metal/CPU/Android/iPhone | Apache 2.0 |
 
 > SmolLM3-3B beats all other 3B models and competes with 4B models (Qwen3-4B, Gemma3-4B). Data quality matters more than model size: SmolLM2-1.7B trained on 11T tokens beats larger models trained on less data.
@@ -221,6 +229,7 @@ Non-Transformer or hybrid models.
 | [ZAYA1-8B](https://huggingface.co/Zyphra/ZAYA1-8B) | Hybrid Mamba + Compressed Cross Attention (CCA) + MoD + EDA | 760M / 8.4B (**9% active**) | On-device deployable, test-time-compute friendly, 128K ctx | Apache 2.0 |
 | [Kimi-Linear-48B-A3B](https://huggingface.co/moonshotai/Kimi-Linear-48B-A3B-Instruct) | MoE hybrid: 3 KDA (linear) layers per 1 MLA (global) | 3B / 48B | **1M context**, 5.7T tokens, demonstrates linear attention can match full attention | MIT |
 | [Bonsai-8B](https://github.com/PrismML-Eng/Bonsai-demo) | Qwen3-8B fine-tuned at **1-bit end-to-end** (GGUF Q1_0), all projections + LM head 1-bit | 8.19B | **1.15 GB on disk** (14.2× FP16), runs on CPU/Android/iPhone | Apache 2.0 |
+| [HRM-Text-1B](https://huggingface.co/sapientinc/HRM-Text-1B) | **Hierarchical Reasoning Model** — dual-timescale recurrent (H/L cycles), PrefixLM objective | ~1B (16 layers per stack) | Research base model (pre-alignment, no SFT/RLHF), 4K ctx | Apache 2.0 |
 
 > **URM** (Ubiquant, Dec 2025) loops its 4 layers 12× instead of stacking 48 distinct layers. With **4× parameters** it reaches 53.8% on ARC-AGI 1 where a vanilla Transformer with 32× parameters stays under 40%. Key claim of the paper: **the FFN, not attention, is the source of reasoning** — counterintuitive given the community's focus on attention variants. Research model, not a production LLM, but architecturally interesting for future LLM designs. See [arXiv:2512.14693](https://arxiv.org/abs/2512.14693).
 
@@ -229,6 +238,8 @@ Non-Transformer or hybrid models.
 > **Kimi-Linear** (Moonshot, Oct 2025, [arXiv:2510.26692](https://arxiv.org/abs/2510.26692)) is Moonshot's open research vehicle for **linear attention** outside the closed K2 family. The architecture is a 3:1 ratio of **KDA (Kimi Delta Attention, linear)** to **MLA (full attention, global)** layers. The point isn't frontier performance — it's the demonstration that linear attention can **match full attention across short, long, and RL-style regimes** while reducing memory cost. Useful baseline for engine work like herbert-rs.
 
 > **Bonsai-8B** (Prism ML, Mar 2026) is a **1-bit end-to-end** fine-tune of Qwen3-8B: every projection + the LM head quantized to 1 bit (GGUF Q1_0), shrinking the deployed model to **1.15 GB**. Direct competitor to BitNet, but trained as a *fine-tune* rather than natively 1.58-bit from scratch. Runs on CUDA, Metal, Android, CPU, and iPhone (via Locally AI). The radical end of the quantization spectrum — accept the quality drop in exchange for ubiquity.
+
+> **HRM-Text-1B** (Sapient Intelligence, May 2026, [arXiv:2605.20613](https://arxiv.org/abs/2605.20613)) is the first language model built on the **Hierarchical Reasoning Model** architecture — a dual-timescale recurrent design that loops H (high-level/slow) and L (low-level/fast) cycles, similar in spirit to URM's recursive depth. Trained from scratch with PrefixLM objective, **no SFT/RLHF/instruction tuning** — it's a research base model, prompt few-shot to use. Context is only 4K, English only. Listed as a research vehicle for the community to experiment with adaptive-compute recurrent architectures, not a production LLM.
 
 ### Decentralized training
 
@@ -312,6 +323,16 @@ A parallel track: models that write proofs in natural English, not formal Lean 4
 
 > UI-TARS-7B beats Claude (87.6%) on ScreenSpot. 7B, Apache 2.0, runs on a laptop.
 
+### Web world models
+
+A different category from web agents. **Agent**: decides "which action?". **World model**: predicts "what state comes next if I take this action?". The world model trains agents and enables inference-time lookahead — it does not pilot the browser itself.
+
+| Model | Type | Sizes | Key claim | License |
+|-------|------|-------|-----------|---------|
+| [WebWorld-8B/14B/32B](https://huggingface.co/Qwen) | Dense Qwen3-based, predicts next page HTML/A11y/Markdown | 8B / 14B / 32B | Beats GPT-4o on Factuality (70-71 vs 59), parity Claude Opus 4.1 / Gemini 3 Pro; +10 pts MiniWob++/WebArena when used to generate agent training data; cross-domain **+0.38 GUI Desktop** | Apache 2.0 |
+
+> **WebWorld** (Qwen Team, May 2026, [arXiv:2602.14721](https://arxiv.org/abs/2602.14721)) is the first serious open-source web world model. Trained on **1M+ trajectories** ([Qwen/WebWorldData](https://huggingface.co/datasets/Qwen/WebWorldData) released separately). Two evaluation axes: **Factuality** (is the predicted next state causally correct?) and **Web Turing** (is it perceptually distinguishable from a real page?). The cross-domain transfer to GUI Desktop (+0.38) suggests the *state → action → new state* pattern generalizes beyond the web. Pair it with a decisional agent (UI-TARS, ShowUI, CogAgent) — WebWorld does not decide, it *simulates*.
+
 ### Search agents
 
 | Model | Specialty | Active | License |
@@ -352,6 +373,7 @@ A parallel track: models that write proofs in natural English, not formal Lean 4
 | [Nemotron 3 Nano Omni 30B-A3B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-Omni-30B-A3B) | -- | 3B | **any-to-any** (text+audio+image+video → text), 256K ctx, Mamba-Transformer hybrid MoE | Nemotron OML |
 | [DeepSeek-OCR](https://huggingface.co/deepseek-ai/DeepSeek-OCR) | -- | 3.3B | **OCR specialist** — *Contexts Optical Compression*: encode long text as compressed image, feed books/papers as pixels not tokens | MIT |
 | [DeepSeek-OCR-2](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2) | -- | 3.4B | OCR v2 with **Visual Causal Flow** (sequential reading order) | Apache 2.0 |
+| [Lance](https://huggingface.co/bytedance-research/Lance) | -- | 3B | **Unified any-to-any** (Qwen2.5-VL-3B base): image+video understanding **+ generation + editing** in one model, 768×768 / 480p@12fps | Apache 2.0 |
 
 > InternVL3-78B (72.2 MMMU) is on par with GPT-4o on multimodal. The InternViT encoder (300M–6B) is trained jointly with the LLM — not bolted on after the fact.
 
@@ -451,7 +473,7 @@ What each benchmark measures, how many questions it has, and where to find more.
 
 | License | Models | Commercial | EU | Patent grant | OSI |
 |---------|--------|-----------|-----|-------------|-----|
-| Apache 2.0 | Gemma 4, Qwen 3/3.5, GPT-OSS, Ministral, Step-3.5-Flash, NousCoder, OmniCoder, Nomos 1, URM, ZAYA1, Bonsai, DeepSeek-OCR-2, Hermes 4.3-36B, Pleias (all variants), Baguettotron | Yes | Yes | Yes | Yes |
+| Apache 2.0 | Gemma 4 (incl. 12B Unified), Qwen 3/3.5, WebWorld, GPT-OSS, Ministral, Step-3.5-Flash, NousCoder, OmniCoder, Mellum 2, Nomos 1, URM, ZAYA1, HRM-Text, Bonsai, DeepSeek-OCR-2, Lance, MiniCPM-V, Hermes 4.3-36B, Pleias (all variants), Baguettotron | Yes | Yes | Yes | Yes |
 | MIT | GLM-4.5-Air, GLM-4.7-Flash, DeepSeek R1-Distill, DeepSeek-V4-Flash, DeepSeek-OCR (v1), Ling-2.6-flash, Kimi-Linear, MiniMax M2.7 *(verify on HF)*, Phi-4 | Yes | Yes | No (implicit) | Yes |
 | 🔴 **Modified MIT** (revenue/MAU caps) | **Mistral Medium 3.5** (revenue cap), historically Kimi K2.5 (100M MAU), MiniMax M2.5 | Conditional | Conditional | -- | No |
 | Nemotron OML | Nemotron 3 Nano/Super, Nemotron 3 Nano Omni | Yes | Yes | Yes | No |
@@ -482,6 +504,12 @@ What each benchmark measures, how many questions it has, and where to find more.
 | Extreme quantization (mobile) | Bonsai-8B (1-bit, 1.15 GB) |
 | Vision on edge (< 1 GB) | LFM2.5-VL-450M |
 | RL self-play research (Lean) | DeepSeek-Prover-V2-7B + SGS (Stanford) |
+| Mobile MLLM (< 1.5 GB) | MiniCPM-V 4.6 (1.2B, iOS/Android/HarmonyOS) |
+| Encoder-free multimodal | Gemma 4 12B Unified (text+image+audio, no separate encoders) |
+| Unified gen+understanding (image/video) | Lance 3B (ByteDance) |
+| IDE-resident coding (active-param efficient) | Mellum 2 12B-A2.5B (JetBrains, LCB v6 69.9) |
+| Web agent training / inference-time lookahead | WebWorld 8B/14B/32B (Qwen, world model — pair with UI-TARS) |
+| Recurrent-architecture research | HRM-Text-1B (Sapient, dual-timescale H/L) |
 | Math | Nemotron Nano 9B v2 (/think mode), GPT-OSS-120B |
 | Code (real bugs) | Step-3.5-Flash, Devstral Small 2 |
 | Code (competition) | GPT-OSS-120B (Codeforces 2622) |
