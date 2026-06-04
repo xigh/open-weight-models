@@ -417,7 +417,11 @@ Patterns observed across 60+ models. Not definitive truths.
 
 - **Domain-specific models (medical, legal, finance) are less mature** than code/math specialists. Generalists often outperform them on domain benchmarks. Specialization helps mainly for specific vocabulary, regulatory compliance, and private data fine-tuning.
 
-### Inference acceleration — MTP / speculative decoding (built-in)
+### Inference acceleration
+
+Three orthogonal axes accelerate inference on open-weight models. **MTP** reduces forward passes (build draft tokens that get verified in a single target pass). **External drafters** (EAGLE-3) do the same with a separate trained model, achieving higher absolute speedups but requiring more setup. **KV cache quantization** reduces memory per token, freeing room for longer context or larger batches — composes orthogonally with either of the spec-decoding paths.
+
+#### MTP / speculative decoding (built-in)
 
 **Multi-Token Prediction (MTP)** is becoming standard for open-weight MoE ≥ 100B in 2025-2026: a small extra prediction module is trained jointly with the main model and reused at inference as a built-in **draft path for speculative decoding**. No external drafter required. Among the models listed here:
 
@@ -434,9 +438,40 @@ Patterns observed across 60+ models. Not definitive truths.
 - **MoE ≥ 100B**: MTP shipped *inside* the model (DeepSeek-V3 / Step / Nemotron / MiniMax). MiniMax M2.7 replicates DeepSeek-V3's exact training schedule (λ=0.3→0.1) — convergence on hyperparameters across labs.
 - **Gemma 4**: MTP shipped as a *separate post-hoc drafter* model — same speedup ceiling (~1.5-3× lossless), but the drafter is an artifact you load independently.
 
+**Distribution layer — Unsloth.** For practitioners, [Unsloth](https://huggingface.co/unsloth) (Daniel Han + team, Apache 2.0 tooling) packages MTP-enabled models as GGUF builds with their **Dynamic 2.0** quantization — important layers upcast, real-world calibration. Their [`unsloth/Qwen3.6-27B-MTP-GGUF`](https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF) is the canonical example (1M+ downloads, 635 likes, *"MTP enables ~1.5-2× faster inference with no accuracy loss"*). [Unsloth Studio](https://unsloth.ai/docs/new/studio) auto-tunes MTP settings per hardware (Mac/CPU/GPU). Practical effect: MTP-enabled Qwen, Gemma 4, etc. become runnable on llama.cpp + consumer hardware without manual drafter wiring.
+
 **Why this matters for inference engine choice (herbert-rs et al.).** A model that ships with MTP gives 1.5-3× throughput out of the box on supported frameworks (vLLM, SGLang, MLX, llama.cpp community) — no drafter to source, train, or quantization-match. Running an MTP-equipped model without spec-decode support is leaving 50-200% throughput on the table.
 
-> Source: per-model HF cards + DeepSeek-V3 paper + MiniMax-M2 tech report ([arXiv:2605.26494](https://arxiv.org/abs/2605.26494) §2.3) + Gemma 4 Google blog. Detailed taxonomy: Sebastian Raschka, *LLM Architecture Gallery — MTP* ([sebastianraschka.com/llm-architecture-gallery/mtp/](https://sebastianraschka.com/llm-architecture-gallery/mtp/)) + Gloeckle et al. 2024 ([arXiv:2404.19737](https://arxiv.org/abs/2404.19737)) for the founding paper.
+> **Sources.** Per-model HF cards · DeepSeek-V3 paper · MiniMax-M2 tech report ([arXiv:2605.26494](https://arxiv.org/abs/2605.26494) §2.3) · Gemma 4 Google blog · Unsloth Qwen3.6 MTP model card · Taxonomy: Sebastian Raschka *LLM Architecture Gallery — MTP* + Gloeckle et al. 2024 ([arXiv:2404.19737](https://arxiv.org/abs/2404.19737), founding paper).
+
+#### External drafters — EAGLE-3
+
+For models that *don't* ship native MTP, the academic SOTA for speculative decoding is **EAGLE-3** (Li, Wei, Zhang, Zhang — NeurIPS 2025, [arXiv:2503.01840](https://arxiv.org/abs/2503.01840)). The key innovation: abandons feature-level prediction in favor of **direct token prediction**, combined with **multi-layer feature fusion** through a technique called *training-time test* — letting the draft model fully benefit from scaling up training data.
+
+**Numbers.** On Llama 3.1 70B AWQ INT4, single H100, batch=1, vLLM, with K=7 drafted tokens : **3.6× speedup** vs vanilla decoding (per LocalAIMaster May 2026 bench). For comparison: EAGLE-2 reaches 3.0× and a generic draft-Llama-3.2-1B model reaches 2.2× in the same setup. EAGLE-3 beats MTP-based drafters in absolute speedup terms.
+
+**Trade-off vs MTP.** EAGLE-3 wins on raw speed but loses on integration: you must source or train the draft model independently, tokenizer-match it, and quantization-match it to the target. MTP-equipped models trade ~0.5× speedup for *zero setup*. Above 70B without native MTP support, EAGLE-3 is currently the only path to 3×+ speedup.
+
+**Frameworks.** TensorRT-LLM (production H100/H200), SGLang (community), vLLM (via custom config). Pre-trained EAGLE heads are available on Hugging Face for Llama 3.1 8B/70B (`yuhuili/EAGLE-LLaMA3.1-Instruct-*`) and a few other targets — but coverage is uneven, which is partly what Unsloth's MTP-packaging strategy is replacing for Qwen.
+
+> **Sources.** EAGLE-3 paper [arXiv:2503.01840](https://arxiv.org/abs/2503.01840) (NeurIPS 2025) · Official repo `SafeAILab/EAGLE` · LocalAIMaster spec-decoding benchmark May 2026.
+
+#### KV cache quantization — Google TurboQuant + community
+
+The KV cache is the **memory bottleneck for long context inference**: at 256K tokens on a 70B model in FP16, the cache alone exceeds 30 GB. Compressing it without quality loss is the third acceleration axis.
+
+**TurboQuant** (Amir Zandieh + Vahab Mirrokni, Google Research — ICLR 2026, [arXiv:2504.19874](https://arxiv.org/abs/2504.19874)) is Google's theoretically-grounded answer. The method composes two algorithms:
+
+- **PolarQuant** (AISTATS 2026, [arXiv:2502.02617](https://arxiv.org/abs/2502.02617)) — converts cache vectors to polar coordinates, eliminating the per-block normalization constant overhead that costs 1-2 extra bits per number in classical quantization
+- **QJL — Quantized Johnson-Lindenstrauss** (AAAI 2025, [arXiv:2406.03482](https://arxiv.org/abs/2406.03482)) — uses 1 bit of sign-only residual to remove quantization bias
+
+**Numbers (per Google blog, evaluated on Gemma + Mistral).** 3 bits per element → **6× memory reduction**, zero accuracy loss on LongBench / NIAH / RULER / ZeroSCROLLS / L-Eval. On H100, **4-bit TurboQuant achieves 8× attention-logits speedup** vs unquantized 32-bit keys (because compute is freed by reduced memory bandwidth). Targets the Gemini KV cache bottleneck explicitly — the same machinery now also feeds Google's vector-search infrastructure at scale.
+
+**Community continuation.** The asymmetric K vs V insight at the heart of TurboQuant — *K cache is effectively low-rank once RoPE is undone, V is flat-spectrum* — has been picked up in 2026 by two independent open-source enhancements: **TurboQuant+** (Tom Turney, May 2026, PR on antirez/ds4) and **Shard** (Krish Garg + Kirrithan Sathananthan, May 2026, 10× compression on Llama-3.1-8B). Earlier work in the same lineage: KIVI 2024, AsymKV (Oct 2024), KVTC (Nov 2025), DeepSeek's **MLA** (May 2024, the same insight applied at *training time* rather than post-hoc).
+
+**Composes orthogonally with MTP and EAGLE.** KV quant doesn't compete with spec decoding — it multiplies. A model with MTP-3 active + TurboQuant 3-bit KV cache: spec decoding saves forward passes, KV quant saves the memory per cached token, batch sizes go up because the cache occupies less, throughput goes up further.
+
+> **Sources.** TurboQuant paper [arXiv:2504.19874](https://arxiv.org/abs/2504.19874) (ICLR 2026) · Google Research blog *TurboQuant: Redefining AI efficiency with extreme compression* (March 2026) · PolarQuant [arXiv:2502.02617](https://arxiv.org/abs/2502.02617) · QJL [arXiv:2406.03482](https://arxiv.org/abs/2406.03482). Community: TurboQuant+ (Tom Turney), Shard (Krish Garg) — both May 2026.
 
 ### Licenses
 
@@ -525,7 +560,9 @@ What each benchmark measures, how many questions it has, and where to find more.
 | Extreme quantization (mobile) | Bonsai-8B (1-bit, 1.15 GB) |
 | Vision on edge (< 1 GB) | LFM2.5-VL-450M |
 | RL self-play research (Lean) | DeepSeek-Prover-V2-7B + SGS (Stanford) |
-| Built-in MTP / speculative decoding | Step-3.5-Flash (MTP-3), MiniMax M2.7 (K=3), Nemotron 3 Super, DeepSeek-V4-Flash; **Gemma 4** with post-hoc drafter |
+| Built-in MTP (zero setup) | Step-3.5-Flash (MTP-3), MiniMax M2.7 (K=3), Nemotron 3 Super, DeepSeek-V4-Flash; **Gemma 4** with post-hoc drafter; **Unsloth GGUF** for Qwen3.6 |
+| Max speedup spec decoding (above 70B, no native MTP) | **EAGLE-3** external drafter (3.6× on Llama 3.1 70B), available for Llama family |
+| KV cache memory bottleneck (long context) | **Google TurboQuant** 3-bit (6× reduction, lossless, ICLR 2026); community: TurboQuant+ / Shard |
 | Mobile MLLM (< 1.5 GB) | MiniCPM-V 4.6 (1.2B, iOS/Android/HarmonyOS) |
 | Encoder-free multimodal | Gemma 4 12B Unified (text+image+audio, no separate encoders) |
 | Unified gen+understanding (image/video) | Lance 3B (ByteDance) |
