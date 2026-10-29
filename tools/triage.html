@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tri des modèles</title>
+<style>
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e2e0da;
+  --accent: #2f5bd3; --keep: #1f8a4c; --keep-bg: #e3f4ea; --drop: #c0392b; --drop-bg: #fbe7e4;
+  --warn: #9a6a00; --warn-bg: #fff4d6; --chip: #efeee9; --sel: #e8eefc;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151514; --panel: #1f1f1d; --ink: #ecebe6; --muted: #9c9a93; --line: #34332f;
+    --accent: #7c9cf5; --keep: #5cc88a; --keep-bg: #183324; --drop: #ee7d6f; --drop-bg: #3a1d19;
+    --warn: #e4b54a; --warn-bg: #382c10; --chip: #2b2a27; --sel: #23304f;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 16px;
+  border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+h1 { font-size: 17px; margin: 0 8px 0 0; }
+.tabs { display: flex; gap: 4px; }
+.tab { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 8px;
+  padding: 5px 10px; cursor: pointer; font: inherit; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.spacer { flex: 1; }
+.meta { color: var(--muted); font-size: 13px; }
+button.ghost { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px;
+  padding: 5px 10px; cursor: pointer; font: inherit; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.filters input, .filters select { font: inherit; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--ink); }
+.filters input[type=search] { min-width: 220px; flex: 1; max-width: 360px; }
+main { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; height: calc(100vh - 112px); }
+#list { overflow-y: auto; border-right: 1px solid var(--line); background: var(--panel); }
+.row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 12px;
+  border-bottom: 1px solid var(--line); cursor: pointer; }
+.row:hover { background: var(--chip); }
+.row[aria-current="true"] { background: var(--sel); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.dot.keep { background: var(--keep); } .dot.drop { background: var(--drop); }
+.row .name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .sub { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .size { color: var(--muted); font-size: 12px; text-align: right; white-space: nowrap; }
+#detail { overflow-y: auto; padding: 20px 28px 40px; }
+.card { max-width: 860px; }
+.card h2 { margin: 0; font-size: 22px; }
+.card h2 a { color: var(--ink); text-decoration: none; }
+.card h2 a:hover { color: var(--accent); }
+.org { color: var(--muted); margin: 2px 0 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.chip { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 13px; }
+.chip.lic-open { background: var(--keep-bg); color: var(--keep); }
+.chip.lic-bad { background: var(--drop-bg); color: var(--drop); }
+.chip.lic-check { background: var(--warn-bg); color: var(--warn); }
+.chip.mod { background: var(--sel); }
+.sizes { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.sizes div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.sizes b { display: block; font-size: 19px; }
+.sizes span { color: var(--muted); font-size: 12px; }
+.warn { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; font-size: 14px; }
+.desc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+  margin-bottom: 12px; white-space: pre-wrap; }
+.desc.loading { color: var(--muted); }
+details { margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+details a { color: var(--accent); }
+label.why { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+textarea { width: 100%; min-height: 64px; font: inherit; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); resize: vertical; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.actions button { font: inherit; font-weight: 600; border-radius: 10px; padding: 9px 18px; cursor: pointer; border: 1px solid var(--line);
+  background: var(--panel); color: var(--ink); }
+.actions .keep { background: var(--keep); border-color: var(--keep); color: #fff; }
+.actions .drop { background: var(--drop); border-color: var(--drop); color: #fff; }
+.status { font-weight: 600; padding: 4px 10px; border-radius: 8px; }
+.status.keep { background: var(--keep-bg); color: var(--keep); }
+.status.drop { background: var(--drop-bg); color: var(--drop); }
+kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+.hint { color: var(--muted); font-size: 12px; margin-top: 16px; }
+.empty { color: var(--muted); padding: 40px; text-align: center; }
+main.bench { grid-template-columns: 1fr; }
+main.bench #list { display: none; }
+#bench { overflow: auto; padding: 14px 16px 40px; }
+.btools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.btools select, .btools label { font: inherit; }
+.bchips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.bchip { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 2px 10px;
+  font: inherit; font-size: 13px; cursor: pointer; }
+.bchip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.bchip small { opacity: .7; }
+table.bt { border-collapse: collapse; font-size: 13px; background: var(--panel); }
+.bt th, .bt td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: right; white-space: nowrap; }
+.bt th { position: sticky; top: 0; background: var(--panel); cursor: pointer; user-select: none; }
+.bt th:hover { color: var(--accent); }
+.bt td.l, .bt th.l { text-align: left; }
+.bt td.best { font-weight: 700; color: var(--keep); }
+.bt td.na { color: var(--muted); }
+.bt tr:hover td { background: var(--chip); }
+.bt a { color: var(--ink); text-decoration: none; } .bt a:hover { color: var(--accent); }
+.bnote { color: var(--muted); font-size: 12px; margin: 10px 0; max-width: 900px; }
+#toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--panel);
+  padding: 8px 14px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
+#toast.on { opacity: .95; }
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; height: auto; }
+  #list { max-height: 40vh; border-right: 0; border-bottom: 1px solid var(--line); order: 2; }
+  #detail { padding: 16px; order: 1; }
+  .filters input[type=search] { min-width: 0; max-width: none; width: 100%; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tri des modèles</h1>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-pile="candidates">À trier <span id="n-candidates"></span></button>
+    <button class="tab" role="tab" data-pile="readme">Dérivés dans le README <span id="n-readme"></span></button>
+    <button class="tab" role="tab" data-pile="decided">Décidés <span id="n-decided"></span></button>
+    <button class="tab" role="tab" data-pile="bench">Benchmarks</button>
+  </div>
+  <div class="spacer"></div>
+  <span class="meta" id="meta"></span>
+  <button class="ghost" id="apply" title="Relance hf_roots.py depuis son cache pour appliquer les décisions">Régénérer ROOTS.md</button>
+</header>
+<div class="filters">
+  <input type="search" id="q" placeholder="Chercher (nom, éditeur…)  /">
+  <select id="f-tier">
+    <option value="">Toutes tailles</option>
+    <option value="main">Q4 ≤ 128 GB</option>
+    <option value="extended">128–256 GB</option>
+    <option value="mainext">Q4 ≤ 256 GB</option>
+    <option value="beyond">&gt; 256 GB</option>
+  </select>
+  <select id="f-lic">
+    <option value="">Toutes licences</option>
+    <option value="open">Ouvertes</option>
+    <option value="check">À vérifier</option>
+    <option value="bad">Non commerciales / hors UE</option>
+    <option value="nobad">Sauf non commerciales / hors UE</option>
+  </select>
+  <select id="f-dom"><option value="">Tous domaines</option></select>
+  <select id="f-mod">
+    <option value="">Toutes modalités</option>
+    <option value="text-only">Texte seul</option>
+    <option value="image">Vision (image)</option>
+    <option value="video">Vidéo</option>
+    <option value="audio">Audio</option>
+  </select>
+  <select id="f-sort">
+    <option value="recent">Plus récents</option>
+    <option value="likes">Plus de likes</option>
+    <option value="size">Plus petits</option>
+  </select>
+</div>
+<main>
+  <div id="list" aria-label="Modèles"></div>
+  <div id="detail"></div>
+  <div id="bench" hidden></div>
+</main>
+<div id="toast"></div>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const MOD_LABEL = { text: "texte", image: "image", video: "vidéo", audio: "audio", "→ audio": "sortie audio" };
+const TIER_LABEL = { main: "Q4 ≤ 128 GB", extended: "Q4 128–256 GB", beyond: "Q4 > 256 GB", unknown: "taille ?" };
+const KIND_LABEL = { root: "racine", "lab-derivative": "dérivé du même lab", derivative: "dérivé d'un autre lab" };
+let models = [], decisions = {}, generated = "";
+let state = { pile: "candidates", current: null, q: "", tier: "mainext", lic: "nobad", dom: "", mod: "", sort: "recent",
+  scope: "all", benchSel: ["GPQA Diamond", "MMLU-Pro", "AIME 2026", "LiveCodeBench v6", "SWE-bench Verified", "Terminal-Bench 2.1"],
+  benchSort: "GPQA Diamond", benchAsc: false, benchAll: false };
+let benches = {}, scan = { running: false };
+try { Object.assign(state, JSON.parse(localStorage.getItem("triage-state") || "{}")); } catch (e) {}
+const cards = {};
+
+function save() { try { localStorage.setItem("triage-state", JSON.stringify(state)); } catch (e) {} }
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 1800); }
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+function fmtP(p) {
+  if (!p) return "?";
+  if (p >= 1e12) return (p / 1e12).toFixed(2) + "T";
+  if (p >= 1e9) return (p >= 1e11 ? Math.round(p / 1e9) : (p / 1e9).toFixed(1)) + "B";
+  return Math.round(p / 1e6) + "M";
+}
+function licClass(c) { return c === "open" || c === "llama" ? "lic-open" : (c === "non-commercial" || c === "eu-excluded") ? "lic-bad" : "lic-check"; }
+
+function pileOf(m) { return decisions[m.family] ? "decided" : m.pile; }
+function matches(m, pileCheck = true) {
+  if (pileCheck && pileOf(m) !== state.pile) return false;
+  const q = state.q.trim().toLowerCase();
+  if (q && !(m.id + " " + (m.publisher || "") + " " + (m.domain || "")).toLowerCase().includes(q)) return false;
+  if (state.tier === "mainext" ? !["main", "extended", "unknown"].includes(m.tier) : state.tier && m.tier !== state.tier) return false;
+  const lc = licClass(m.license_class);
+  if (state.lic === "open" && lc !== "lic-open") return false;
+  if (state.lic === "check" && lc !== "lic-check") return false;
+  if (state.lic === "bad" && lc !== "lic-bad") return false;
+  if (state.lic === "nobad" && lc === "lic-bad") return false;
+  if (state.dom && m.domain !== state.dom) return false;
+  const mods = m.modalities || ["text"];
+  if (state.mod === "text-only" && mods.some((x) => x !== "text")) return false;
+  if (state.mod && state.mod !== "text-only" && !mods.includes(state.mod)) return false;
+  return true;
+}
+function visible() {
+  const v = models.filter(matches);
+  const key = { recent: (m) => [m.latest, m.likes], likes: (m) => [m.likes, m.latest], size: (m) => [-(m.params || 1e15), m.likes] }[state.sort];
+  return v.sort((a, b) => { const ka = key(a), kb = key(b); return ka[0] < kb[0] ? 1 : ka[0] > kb[0] ? -1 : kb[1] - ka[1]; });
+}
+
+function renderCounts() {
+  const n = { candidates: 0, readme: 0, decided: 0, listed: 0 };
+  for (const m of models) n[pileOf(m)]++;
+  delete n.listed;
+  for (const k in n) $("#n-" + k).textContent = "(" + n[k] + ")";
+  document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t.dataset.pile === state.pile));
+  const keep = Object.values(decisions).filter((d) => d.decision === "keep").length;
+  $("#meta").textContent = `${keep} gardés · ${Object.keys(decisions).length - keep} dégagés · scan ${generated.slice(0, 10)}`;
+}
+
+function renderList() {
+  const v = visible(), list = $("#list");
+  list.replaceChildren();
+  if (!v.length) { list.append(el("div", { class: "empty", text: "Rien dans cette pile avec ces filtres." })); }
+  if (!v.find((m) => m.family === state.current)) state.current = v.length ? v[0].family : null;
+  for (const m of v) {
+    const d = decisions[m.family];
+    const row = el("div", { class: "row", role: "button", tabindex: "-1", "aria-current": String(m.family === state.current) },
+      el("span", { class: "dot " + (d ? d.decision : "") }),
+      el("div", {}, el("div", { class: "name", text: m.id.split("/")[1] }),
+        el("div", { class: "sub", text: `${m.publisher} · ${m.latest} · ${(m.modalities || []).filter((x) => x !== "text").map((x) => MOD_LABEL[x]).join(", ") || "texte"}` })),
+      el("div", { class: "size", text: fmtP(m.params) + (m.q4_gb ? `\n${Math.round(m.q4_gb)} GB` : "") }));
+    row.addEventListener("click", () => { state.current = m.family; save(); renderList(); renderDetail(); });
+    list.append(row);
+  }
+  const cur = list.querySelector('[aria-current="true"]');
+  if (cur) cur.scrollIntoView({ block: "nearest" });
+}
+
+async function loadCard(id) {
+  if (cards[id]) return cards[id];
+  cards[id] = fetch("/api/card?id=" + encodeURIComponent(id)).then((r) => r.json()).catch(() => ({ text: null, error: "réseau" }));
+  return cards[id];
+}
+
+function renderDetail() {
+  const box = $("#detail");
+  const v = visible(), m = v.find((x) => x.family === state.current);
+  box.replaceChildren();
+  if (!m) { box.append(el("div", { class: "empty", text: state.pile === "candidates" ? "Tout est trié ici. 🎉" : "Rien à afficher." })); return; }
+  const d = decisions[m.family];
+  const url = "https://huggingface.co/" + m.id;
+  const card = el("div", { class: "card" });
+  card.append(el("h2", {}, el("a", { href: url, target: "_blank", rel: "noopener", text: m.id + " ↗" })));
+  card.append(el("div", { class: "org", text: `${m.publisher} · sorti le ${m.created}${m.latest !== m.created ? " (dernière variante " + m.latest + ")" : ""}` }));
+  const chips = el("div", { class: "chips" });
+  chips.append(el("span", { class: "chip", text: m.domain || "General" }));
+  for (const x of m.modalities || ["text"]) chips.append(el("span", { class: "chip mod", text: MOD_LABEL[x] || x }));
+  chips.append(el("span", { class: "chip " + licClass(m.license_class), text: "licence " + m.license }));
+  chips.append(el("span", { class: "chip", text: TIER_LABEL[m.tier] || m.tier }));
+  chips.append(el("span", { class: "chip", text: "♥ " + m.likes }));
+  chips.append(el("span", { class: "chip", text: KIND_LABEL[m.kind] || m.kind }));
+  if (m.gated) chips.append(el("span", { class: "chip", text: "accès sur demande" }));
+  card.append(chips);
+  card.append(el("div", { class: "sizes" },
+    el("div", {}, el("b", { text: fmtP(m.params) }), el("span", { text: "paramètres" })),
+    el("div", {}, el("b", { text: m.active ? fmtP(m.active) : "—" }), el("span", { text: "actifs (MoE)" })),
+    el("div", {}, el("b", { text: m.q4_gb ? Math.round(m.q4_gb) + " GB" : "?" }), el("span", { text: "VRAM Q4 estimée" }))));
+  const warns = [];
+  if (m.kind !== "root" && m.why) warns.push("Filiation : " + m.why);
+  if (m.suspect_base) warns.push("⚠️ Même nombre de paramètres que " + m.suspect_base + " : probablement un fine-tune non déclaré.");
+  if (m.related_listed) warns.push("Proche d'un modèle déjà dans le README : " + m.related_listed);
+  for (const w of warns) card.append(el("div", { class: "warn", text: w }));
+  const desc = el("div", { class: "desc loading", text: "Chargement de la fiche…" });
+  card.append(desc);
+  const bbox = el("div", {});
+  card.append(bbox);
+  loadCard(m.id).then((c) => {
+    if (state.current !== m.family) return;
+    desc.classList.remove("loading");
+    desc.textContent = c.text || ("Pas de description" + (c.error ? " (" + c.error + ")" : "") + ".");
+    if (c.benches && c.benches.length) {
+      benches[m.family] = c.benches;
+      const t = el("table", { class: "bt" });
+      t.append(el("thead", {}, el("tr", {}, el("th", { class: "l", text: "Benchmark" }), el("th", { text: "Score" }), el("th", { class: "l", text: "Colonne de la fiche" }))));
+      const tb = el("tbody");
+      for (const b of c.benches) tb.append(el("tr", {}, el("td", { class: "l", text: b.bench, title: b.label }), el("td", { text: b.raw.replace(/\*/g, "").trim() }), el("td", { class: "l", text: b.header })));
+      t.append(tb);
+      bbox.append(el("details", { open: "" }, el("summary", { text: c.benches.length + " score(s) extrait(s) de la fiche" }), t));
+    }
+  });
+  if (m.variants && m.variants.length) {
+    const det = el("details", {}, el("summary", { text: m.variants.length + " variante(s)" }));
+    for (const r of m.variants) det.append(el("div", {}, el("a", { href: "https://huggingface.co/" + r, target: "_blank", rel: "noopener", text: r })));
+    card.append(det);
+  }
+  card.append(el("label", { class: "why", for: "why", text: "Pourquoi ? (facultatif)" }));
+  const ta = el("textarea", { id: "why", placeholder: "Ex. : trop proche de Qwen3.5, licence douteuse, archi intéressante pour herbert…" });
+  ta.value = d && d.reason ? d.reason : "";
+  card.append(ta);
+  const actions = el("div", { class: "actions" });
+  const bKeep = el("button", { class: "keep", text: "✓ Garder (G)" });
+  const bDrop = el("button", { class: "drop", text: "✕ Dégager (D)" });
+  const bNext = el("button", { text: "Passer →" });
+  bKeep.onclick = () => decide("keep"); bDrop.onclick = () => decide("drop"); bNext.onclick = () => move(1);
+  actions.append(bKeep, bDrop, bNext);
+  if (d) {
+    actions.append(el("span", { class: "status " + d.decision, text: (d.decision === "keep" ? "Gardé" : "Dégagé") + " le " + d.date }));
+    const bUndo = el("button", { text: "Annuler (U)" }); bUndo.onclick = () => decide(null); actions.append(bUndo);
+  }
+  card.append(actions);
+  card.append(el("div", { class: "hint" }, "Clavier : ", el("kbd", { text: "G" }), " garder · ", el("kbd", { text: "D" }), " dégager · ",
+    el("kbd", { text: "J" }), "/", el("kbd", { text: "→" }), " suivant · ", el("kbd", { text: "K" }), "/", el("kbd", { text: "←" }), " précédent · ",
+    el("kbd", { text: "U" }), " annuler · ", el("kbd", { text: "/" }), " chercher · ", el("kbd", { text: "Échap" }), " quitter le champ texte"));
+  box.append(card);
+  box.scrollTop = 0;
+  // warm the next descriptions
+  const i = v.indexOf(m);
+  for (const n of v.slice(i + 1, i + 3)) loadCard(n.id);
+}
+
+// ---------------------------------------------------------------- benchmarks
+async function loadBenches() {
+  const r = await fetch("/api/benches").then((x) => x.json()).catch(() => null);
+  if (r) { benches = r.benches; scan = r.scan; }
+}
+function inScope(m) {
+  const p = pileOf(m), d = decisions[m.family];
+  if (state.scope === "candidates") return p === "candidates";
+  if (state.scope === "readme") return m.pile === "listed" || m.pile === "readme";
+  if (state.scope === "kept") return d && d.decision === "keep" || m.pile === "listed";
+  return !(d && d.decision === "drop");
+}
+function renderBench() {
+  const box = $("#bench");
+  box.replaceChildren();
+  const pool = models.filter((m) => inScope(m) && matches(m, false));
+  const count = {};
+  for (const m of pool) for (const b of benches[m.family] || []) count[b.bench] = (count[b.bench] || 0) + 1;
+  const missing = models.filter((m) => !(m.family in benches)).length;
+  // toolbar
+  const tools = el("div", { class: "btools" });
+  const scope = el("select", {});
+  for (const [v, t] of [["all", "Tous (sauf dégagés)"], ["candidates", "À trier"], ["readme", "Déjà dans le README"], ["kept", "Gardés + README"]])
+    scope.append(el("option", { value: v, text: t }));
+  scope.value = state.scope;
+  scope.onchange = () => { state.scope = scope.value; save(); renderBench(); };
+  const allBox = el("input", { type: "checkbox" }); allBox.checked = state.benchAll;
+  allBox.onchange = () => { state.benchAll = allBox.checked; save(); renderBench(); };
+  const scanBtn = el("button", { class: "ghost", text: scan.running ? `Scan des fiches… ${scan.done}/${scan.total}` : `Scanner les fiches (${missing} manquantes)` });
+  scanBtn.disabled = scan.running || !missing;
+  scanBtn.onclick = async () => { await fetch("/api/scan-cards", { method: "POST" }); pollScan(); };
+  tools.append(scope, el("label", {}, allBox, " seulement les modèles qui ont tous les benchmarks choisis"), scanBtn);
+  box.append(tools);
+  // benchmark chips, most reported first
+  const chips = el("div", { class: "bchips" });
+  const names = Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b));
+  for (const b of new Set([...state.benchSel.filter((x) => count[x]), ...names])) {
+    const on = state.benchSel.includes(b);
+    const c = el("button", { class: "bchip", "aria-pressed": String(on) }, b + " ", el("small", { text: count[b] || 0 }));
+    c.onclick = () => {
+      state.benchSel = on ? state.benchSel.filter((x) => x !== b) : [...state.benchSel, b];
+      save(); renderBench();
+    };
+    chips.append(c);
+  }
+  box.append(chips);
+  const sel = state.benchSel.filter((b) => count[b]);
+  let rows = pool.map((m) => ({ m, v: Object.fromEntries((benches[m.family] || []).map((b) => [b.bench, b])) }))
+    .filter((r) => sel.length && (state.benchAll ? sel.every((b) => r.v[b]) : sel.some((b) => r.v[b])));
+  const sk = state.benchSort, dir = state.benchAsc ? 1 : -1;
+  const keyOf = (r) => sk === "_name" ? r.m.id.toLowerCase() : sk === "_size" ? (r.m.params || 0) : sk === "_q4" ? (r.m.q4_gb || 0)
+    : sk === "_active" ? (r.m.active || r.m.params || 0) : (r.v[sk] ? r.v[sk].value : null);
+  rows.sort((a, b) => {
+    const ka = keyOf(a), kb = keyOf(b);
+    if (ka === null && kb === null) return 0; if (ka === null) return 1; if (kb === null) return -1;
+    return (ka < kb ? -1 : ka > kb ? 1 : 0) * dir;
+  });
+  if (!rows.length) {
+    box.append(el("div", { class: "empty", text: missing ? "Aucun score pour l'instant : lance « Scanner les fiches »." : "Aucun modèle avec ces benchmarks et ces filtres." }));
+    return;
+  }
+  const best = {};
+  for (const b of sel) best[b] = Math.max(...rows.map((r) => r.v[b] ? r.v[b].value : -Infinity));
+  const t = el("table", { class: "bt" }), head = el("tr");
+  const th = (key, label, left) => {
+    const e = el("th", { class: left ? "l" : "", text: label + (state.benchSort === key ? (state.benchAsc ? " ▲" : " ▼") : "") });
+    e.onclick = () => { if (state.benchSort === key) state.benchAsc = !state.benchAsc; else { state.benchSort = key; state.benchAsc = key === "_name"; } save(); renderBench(); };
+    return e;
+  };
+  head.append(th("_name", "Modèle", true), el("th", { class: "l", text: "Éditeur" }), th("_size", "Total"), th("_active", "Actifs"), th("_q4", "Q4"),
+    el("th", { class: "l", text: "Entrées" }), el("th", { class: "l", text: "Statut" }));
+  for (const b of sel) head.append(th(b, b));
+  t.append(el("thead", {}, head));
+  const tb = el("tbody");
+  for (const { m, v } of rows) {
+    const d = decisions[m.family];
+    const status = d ? (d.decision === "keep" ? "gardé" : "dégagé") : m.pile === "listed" ? "README" : m.pile === "readme" ? "README (dérivé)" : "à trier";
+    const name = el("a", { href: "https://huggingface.co/" + m.id, target: "_blank", rel: "noopener", text: m.id });
+    const tr = el("tr", {},
+      el("td", { class: "l" }, name), el("td", { class: "l", text: m.publisher }),
+      el("td", { text: fmtP(m.params) }), el("td", { text: m.active ? fmtP(m.active) : "—" }),
+      el("td", { text: m.q4_gb ? Math.round(m.q4_gb) + " GB" : "?" }),
+      el("td", { class: "l", text: (m.modalities || []).filter((x) => x !== "text").map((x) => MOD_LABEL[x]).join(", ") || "texte" }),
+      el("td", { class: "l", text: status }));
+    if (m.pile !== "listed") {
+      name.title = "Clic : ouvrir dans le tri · ⌘-clic : Hugging Face";
+      name.addEventListener("click", (e) => {
+        if (e.metaKey || e.ctrlKey) return;
+        e.preventDefault(); state.pile = pileOf(m); state.current = m.family; save(); renderAll();
+      });
+    }
+    for (const b of sel) {
+      const x = v[b];
+      tr.append(x ? el("td", { class: x.value === best[b] ? "best" : "", text: x.raw.replace(/\*/g, "").trim() || x.value,
+        title: `${x.label} — colonne « ${x.header} »` }) : el("td", { class: "na", text: "—" }));
+    }
+    tb.append(tr);
+  }
+  t.append(tb);
+  box.append(t);
+  box.append(el("div", { class: "bnote", text: "Scores extraits automatiquement des tableaux des fiches Hugging Face (colonne ou ligne dont l'en-tête correspond au nom du modèle). Survoler une cellule montre la ligne et la colonne d'origine. Les réglages (thinking, outils, harness, n-shot) varient d'une fiche à l'autre : à vérifier avant de citer. Les fiches qui ne publient leurs scores qu'en image n'apparaissent pas." }));
+}
+async function pollScan() {
+  await loadBenches(); renderBench();
+  if (scan.running) setTimeout(pollScan, 2000);
+}
+function renderAll() {
+  const benchMode = state.pile === "bench";
+  $("main").classList.toggle("bench", benchMode);
+  $("#detail").hidden = benchMode; $("#bench").hidden = !benchMode;
+  $("#f-sort").hidden = benchMode;
+  renderCounts();
+  if (benchMode) { loadBenches().then(renderBench); } else { renderList(); renderDetail(); }
+}
+
+function move(step) {
+  const v = visible(), i = v.findIndex((m) => m.family === state.current);
+  if (i < 0) return;
+  const n = v[Math.min(v.length - 1, Math.max(0, i + step))];
+  state.current = n.family; save(); renderList(); renderDetail();
+}
+
+async function decide(decision) {
+  const v = visible(), i = v.findIndex((m) => m.family === state.current);
+  if (i < 0) return;
+  const m = v[i];
+  const reason = ($("#why") || {}).value || "";
+  const r = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ family: m.family, id: m.id, decision, reason }) });
+  if (!r.ok) { toast("Échec de l'enregistrement"); return; }
+  decisions = (await r.json()).decisions;
+  toast(decision === "keep" ? "Gardé : " + m.id : decision === "drop" ? "Dégagé : " + m.id : "Décision annulée");
+  // stay in the pile: go to the next model of the current view
+  const rest = visible();
+  const next = rest.find((x, j) => j >= i && x.family !== m.family) || rest[rest.length - 1];
+  state.current = decision === null && state.pile === "decided" ? (next && next.family) : (rest.find((x) => x.family === m.family) ? m.family : next && next.family);
+  if (decision !== null && state.pile !== "decided") state.current = next && next.family;
+  save(); renderCounts(); renderList(); renderDetail();
+}
+
+function bindFilters() {
+  const map = { "#q": "q", "#f-tier": "tier", "#f-lic": "lic", "#f-dom": "dom", "#f-mod": "mod", "#f-sort": "sort" };
+  for (const [sel, key] of Object.entries(map)) {
+    const e = $(sel); e.value = state[key];
+    e.addEventListener("input", () => { state[key] = e.value; save(); state.pile === "bench" ? renderBench() : (renderList(), renderDetail()); });
+  }
+  document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+    state.pile = t.dataset.pile; state.current = null; save(); renderAll();
+  }));
+  $("#apply").addEventListener("click", async () => {
+    $("#apply").disabled = true; toast("Régénération en cours…");
+    const r = await fetch("/api/apply", { method: "POST" }).then((x) => x.json()).catch(() => ({ ok: false }));
+    $("#apply").disabled = false;
+    toast(r.ok ? "ROOTS.md et data/models.json régénérés" : "Échec : voir le terminal");
+    if (!r.ok && r.log) console.error(r.log);
+  });
+  document.addEventListener("keydown", (e) => {
+    const typing = ["TEXTAREA", "INPUT", "SELECT"].includes(document.activeElement.tagName);
+    if (e.key === "Escape") { document.activeElement.blur(); return; }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (state.pile === "bench" && e.key !== "/") return;
+    const k = e.key.toLowerCase();
+    if (k === "g") decide("keep");
+    else if (k === "d") decide("drop");
+    else if (k === "u") decide(null);
+    else if (k === "j" || e.key === "ArrowRight" || e.key === "ArrowDown") move(1);
+    else if (k === "k" || e.key === "ArrowLeft" || e.key === "ArrowUp") move(-1);
+    else if (e.key === "/") { $("#q").focus(); }
+    else return;
+    e.preventDefault();
+  });
+}
+
+(async function init() {
+  const data = await fetch("/api/models").then((r) => r.json());
+  models = data.models; decisions = data.decisions; generated = data.generated || "";
+  const doms = [...new Set(models.map((m) => m.domain || "General"))].sort();
+  for (const d of doms) $("#f-dom").append(el("option", { value: d, text: d }));
+  const tab = location.hash.slice(1);  // direct link to a tab: #candidates, #readme, #decided, #bench
+  if (["candidates", "readme", "decided", "bench"].includes(tab)) state.pile = tab;
+  bindFilters(); renderAll();
+})();
+</script>
+</body>
+</html>

@@ -40,6 +40,10 @@ Stdlib only (Python >= 3.11 for tomllib). Raw API responses are cached
 Unauthenticated API quota is 500 requests / 5 min; HF_TOKEN (or
 ~/.cache/huggingface/token) is used if present.
 
+Decisions taken in the triage web app (tools/triage.py -> data/triage.json)
+are applied on the next run: "drop" sets a family aside, "keep" selects a root
+for README or keeps a derivative as an exception.
+
 Usage:
   tools/hf_roots.py            # updates data/models.json + ROOTS.md
   tools/hf_roots.py -v         # log every organisation scanned
@@ -313,6 +317,66 @@ def license_of(m):
     return key or "?", cls
 
 
+# (domain, pattern on the repo name), first match wins. Tags are too broad
+# (generalists tag themselves "code"); modalities are reported apart.
+DOMAINS = [
+    ("Theorem proving", r"prover|lean"),
+    ("OCR / documents", r"ocr|parsing|(?:^|[-_])doc"),
+    ("Code", r"cod(?:e|er|ing)|(?:^|[-_])swe|devstral"),
+    ("Math", r"math"),
+    ("Medical / bio", r"(?:^|[-_])med|bio|health|clinic|sante|protein"),
+    ("Finance", r"(?:^|[-_])fin(?:ance)?(?:$|[-_])"),
+    ("Safety / guard", r"guard|safety|shield|moderat"),
+    ("Agents / GUI", r"agent|tool|gui|(?:^|[-_])web|computer"),
+    ("Speech", r"speech|voice|asr|tts|transcri"),
+    ("Embedding / rerank", r"embed|rerank"),
+    ("Translation", r"translat|(?:^|[-_])mt(?:$|[-_])"),
+]
+
+
+def domain_of(m):
+    name = m["id"].split("/", 1)[1].lower()
+    for domain, pat in DOMAINS:
+        if re.search(pat, name):
+            return domain
+    return "General"
+
+
+MODALITY_PIPELINES = {
+    "image-text-to-text": {"image"}, "image-to-text": {"image"},
+    "video-text-to-text": {"image", "video"}, "audio-text-to-text": {"audio"},
+    "any-to-any": set(),
+}
+MODALITY_RE = {
+    "image": r"vision|image|(?:^|[-_])vl(?:m)?(?:$|[-_])|visual|ocr|multimodal|omni",
+    "video": r"video|omni",
+    "audio": r"audio|speech|voice|asr|omni|whisper",
+}
+
+
+def modalities_of(m):
+    """Input modalities (text always) + audio output, from pipeline, tags, name."""
+    pipe = m.get("pipeline_tag")
+    mods = {"text"} | MODALITY_PIPELINES.get(pipe, set())
+    hay = " ".join([m["id"].split("/", 1)[1].lower()]
+                   + [t.lower() for t in m.get("tags") or [] if ":" not in t])
+    for mod, pat in MODALITY_RE.items():
+        if re.search(pat, hay):
+            mods.add(mod)
+    out = [x for x in ("text", "image", "video", "audio") if x in mods]
+    if pipe == "any-to-any" and "audio" in mods or re.search(r"text-to-speech|tts", hay):
+        out.append("→ audio")
+    return out
+
+
+def load_triage(path):
+    """Decisions made in tools/triage.py: {family: {decision, reason, ...}}."""
+    if not path or not os.path.exists(path):
+        return {}
+    with open(path) as f:
+        return {k.lower(): v for k, v in json.load(f).items()}
+
+
 def family_of(repo):
     author, name = repo.split("/", 1)
     name = name.lower()
@@ -396,7 +460,7 @@ def collect(client, cfg):
     return pool
 
 
-def analyse(pool, cfg, listed_repos):
+def analyse(pool, cfg, listed_repos, triage):
     crit = cfg["criteria"]
     followed = {a.lower(): name for a, name in cfg["orgs"].items()}
     ignore = {k.lower(): v for k, v in cfg.get("ignore", {}).items()}
@@ -440,11 +504,20 @@ def analyse(pool, cfg, listed_repos):
         stats["followed_models"] += 1
         stats[kind] += 1
         fam = family_of(m["id"])
-        kept = keep.get(m["id"].lower()) or keep.get(fam)
-        if kind == "derivative" and not kept:
-            continue
-        lic, lcls = license_of(m)
+        tri = triage.get(fam) or {}
+        if tri.get("decision") == "keep" and kind == "derivative":
+            kept = "triage" + (f": {tri['reason']}" if tri.get("reason") else "")
+        else:
+            kept = keep.get(m["id"].lower()) or keep.get(fam)
         match, exact = listed_match(fam, readme_families)
+        listed = m["id"] in listed_repos or exact
+        # a derivative already in README stays visible, to be kept or dropped
+        if kind == "derivative" and not kept and not listed:
+            continue
+        ignored = ignore.get(m["id"].lower()) or ignore.get(fam)
+        if tri.get("decision") == "drop":
+            ignored = "triage" + (f": {tri['reason']}" if tri.get("reason") else "")
+        lic, lcls = license_of(m)
         rows.append({
             "id": m["id"], "author": author, "publisher": followed[author.lower()],
             "family": fam, "kind": kind, "why": why, "suspect_base": suspect,
@@ -454,10 +527,14 @@ def analyse(pool, cfg, listed_repos):
             "q4_gb": round(total / 1e9 * Q4_BYTES_PER_PARAM, 1) if total else None,
             "tier": tier_of(total, crit), "license": lic, "license_class": lcls,
             "gated": bool(m.get("gated")),
-            "listed": m["id"] in listed_repos or exact,
+            "domain": domain_of(m),
+            "modalities": modalities_of(m),
+            "listed": listed,
             "related_listed": None if exact else match,
-            "ignored": ignore.get(m["id"].lower()) or ignore.get(fam),
+            "ignored": ignored,
             "kept": kept,
+            "selected": (tri.get("reason") or "selected") if tri.get("decision") == "keep"
+                        and kind != "derivative" else None,
         })
 
     suggestions = []
@@ -495,6 +572,7 @@ def group_families(rows):
         rep["listed"] = any(r["listed"] for r in members)
         rep["ignored"] = next((r["ignored"] for r in members if r["ignored"]), None)
         rep["kept"] = next((r["kept"] for r in members if r["kept"]), None)
+        rep["selected"] = next((r["selected"] for r in members if r["selected"]), None)
         out.append(rep)
     return out
 
@@ -578,7 +656,7 @@ LICENSE_MARK = {"open": "", "llama": " (EU: text-only)", "conditional": " ⚠️
 
 
 def md_table(fams):
-    lines = ["| Model | Publisher | Released | Total | Active | Q4 | Pipeline | License | Likes | Note |",
+    lines = ["| Model | Publisher | Released | Total | Active | Q4 | Inputs | License | Likes | Note |",
              "|-------|-----------|----------|-------|--------|----|----------|---------|------:|------|"]
     for r in fams:
         note = []
@@ -600,6 +678,8 @@ def md_table(fams):
             note.append(f"kept: {r['kept']}")
         if r["listed"]:
             note.append("in README")
+        if r.get("selected"):
+            note.append(f"selected: {r['selected']}")
         if r["ignored"]:
             note.append(f"set aside: {r['ignored']}")
         q4 = f"{r['q4_gb']:.0f} GB" if r["q4_gb"] else "?"
@@ -607,7 +687,7 @@ def md_table(fams):
         lines.append(
             f"| [{r['id']}](https://huggingface.co/{r['id']}) | {r['publisher']} | {released} "
             f"| {fmt_params(r['params'])} | {fmt_params(r['active']) if r['active'] else '--'} "
-            f"| {q4} | {r['pipeline'] or '--'} "
+            f"| {q4} | {' + '.join(r.get('modalities') or []) or r['pipeline'] or '--'} "
             f"| {r['license']}{LICENSE_MARK[r['license_class']]} | {r['likes']} "
             f"| {'; '.join(note)} |")
     return "\n".join(lines)
@@ -622,7 +702,8 @@ def render_md(db, current, cfg, new):
     # families not seen by this run (deleted, renamed) stay in the database only;
     # below the report threshold they are tracked but not shown
     fams = [f for f in current.values() if f["first_reported"]]
-    live = [f for f in fams if not f["ignored"] and not f.get("kept")]
+    live = [f for f in fams if not f["ignored"] and not f.get("kept") and not f.get("selected")
+            and f["kind"] != "derivative"]
     roots = [f for f in live if f["kind"] == "root" and not f["suspect_base"]]
     unlisted = [f for f in roots if not f["listed"]]
 
@@ -675,7 +756,13 @@ def render_md(db, current, cfg, new):
          sort_recent([f for f in live if f["kind"] == "lab-derivative" and not f["listed"]])),
         ("Suspected undeclared fine-tunes",
          sort_recent([f for f in live if f["suspect_base"] and not f["listed"]])),
-        ("Already in README", sort_recent([f for f in live if f["listed"]])),
+        ("Selected in triage — to add to README",
+         sort_recent([f for f in fams if f.get("selected") and not f["listed"] and not f["ignored"]])),
+        ("Already in README", sort_recent([f for f in live if f["listed"]]
+                                          + [f for f in fams if f.get("selected") and f["listed"]])),
+        ("In README but derivative of another lab (keep or drop in triage)",
+         sort_recent([f for f in fams if f["kind"] == "derivative" and f["listed"]
+                      and not f.get("kept") and not f["ignored"]])),
         ("Kept exceptions in config.toml (derivatives kept on purpose)",
          sort_recent([f for f in fams if f.get("kept") and not f["ignored"]])),
         ("Set aside in config.toml", sort_recent([f for f in fams if f["ignored"]])),
@@ -725,6 +812,8 @@ def main():
     p.add_argument("--readme", default=os.path.join(root, "README.md"))
     p.add_argument("--db", default=os.path.join(root, "data", "models.json"))
     p.add_argument("--out-md", default=os.path.join(root, "ROOTS.md"))
+    p.add_argument("--triage", default=os.path.join(root, "data", "triage.json"),
+                   help="decisions written by tools/triage.py")
     p.add_argument("--cache-dir", default=os.path.expanduser("~/.cache/hf_roots"))
     p.add_argument("--ttl-hours", type=float, default=24,
                    help="reuse cached API responses younger than this (default 24)")
@@ -734,11 +823,15 @@ def main():
 
     cfg = load_config(args.config)
     pool = collect(Client(args.cache_dir, args.ttl_hours), cfg)
-    rows, stats, suggestions = analyse(pool, cfg, readme_repos(args.readme))
+    rows, stats, suggestions = analyse(pool, cfg, readme_repos(args.readme),
+                                       load_triage(args.triage))
     fams = group_families(rows)
     db, current, new = merge_db(args.db, fams, stats, suggestions, now_iso(),
                                 cfg["criteria"]["report_min_likes"])
     write_db(args.db, db)
+    # this run's families with likes, for tools/triage.py (not versioned)
+    with open(os.path.join(args.cache_dir, "last_run.json"), "w") as f:
+        json.dump({"generated": db["generated"], "families": current}, f, ensure_ascii=False)
     with open(args.out_md, "w") as f:
         f.write(render_md(db, current, cfg, new if db["previous_run"] else set()))
     unlisted = sum(1 for r in fams if not r["listed"] and r["kind"] == "root")

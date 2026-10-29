@@ -81,7 +81,7 @@ This excludes Llama 4 multimodal (EU exclusion), Qwen 3.6 Plus (closed-source), 
 | [Mistral Medium 3.5 128B](https://huggingface.co/mistralai/Mistral-Medium-3.5-128B) | Mistral AI | 128B | 128B | Dense + Pixtral vision | 256K | 🔴 **Modified MIT** (revenue cap) | First Mistral merged flagship: Medium 3.1 + Magistral + Devstral 2 unified, configurable `reasoning_effort` |
 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) | Alibaba | 27B | 27B | Dense hybrid (3:1 Gated DeltaNet / Gated Attention) + MTP, native VLM | 262K (1M YaRN) | Apache 2.0 | GPQA 89.2, LCB v6 90.3, Terminal-Bench 2.1 73.0, SWE-bench Pro 61.7 |
 | [Muse-Glimmer-30B](https://huggingface.co/meta-models/Muse-Glimmer-30B) | Meta (MSL) | 29.6B | 29.6B | Dense, 3:1 local/global attn, ViT-G vision, DFlash drafter | 131K | Apache 2.0 | SWE-bench V 76.0, GPQA 83.5, AIME 2026 94.7, MMMU Pro 74 |
-| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | Aleph Alpha | 3.46B | 78B | MoE (384 experts, top-6), 4:1 SWA/global | 262K (1M extrapolated) | Apache 2.0 | GPQA 84.3, MMLU-Pro 80.0, AIME 2026 96.0, LCB v6 85.9, RULER 1M 63.2 (base) |
+| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | Aleph Alpha | 3.46B | 78B | MoE (384 experts, top-6), 4:1 SWA/global | 262K (1M extrapolated) | Apache 2.0 | GPQA 84.8, MMLU-Pro 80.1, AIME 2026 96.7, LCB v6 85.1, RULER 1M 63.2 (base) — BF16 card |
 | [Raon-1-mini-preview](https://huggingface.co/KRAFTON/Raon-1-mini-preview) | Krafton | 4.3B | 28.8B | Hybrid MoE (Raon Delta Attention 3:1 NoPE MLA, mHC) | 262K | Apache 2.0 (gated) | GPQA 84.3, MMLU-Pro 76.5, AIME 2026 93.3, LCB v6 81.6, SWE-bench V 70.8 |
 | [Nemotron 3.5 Super-VL](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16) | NVIDIA | 12B | 120B | Mamba-2/Transformer MoE + MTP, C-RADIO vision | 1M | OpenMDW-1.1 | GPQA 89.52, LCB v6 88.22, SWE-bench V 71.10, Terminal-Bench 2.1 60.67 |
 | [Nemotron 3.5 Bolt 74B-A9B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-BF16) | NVIDIA | 9B | 74B | Mamba-2/Transformer hybrid LatentMoE, C-RADIO v4-H vision — **compressed from Nemotron 3.5 Super-VL** | 256K | OpenMDW-1.1 | GPQA 88.83, Terminal-Bench 2.1 53.93, BrowseComp 70.00; "24GB" IQ2 build: GPQA 86.43 |
@@ -141,11 +141,11 @@ Models that exceed the 128 GB Q4 main cap but fit a 256 GB workstation (Mac Stud
 | [Nemotron 3.5 Super-VL](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16) | 71.1% | -- | 12B | OpenMDW-1.1 |
 | [Laguna XS 2.1](https://huggingface.co/poolside/Laguna-XS-2.1) | 70.9% | -- | 3B | OpenMDW-1.1 |
 | [Raon-1-mini-preview](https://huggingface.co/KRAFTON/Raon-1-mini-preview) | 70.8% | -- | 4.3B | Apache 2.0 |
+| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 69.2% | -- | 3.46B | Apache 2.0 |
 | [Devstral 2](https://huggingface.co/mistralai/Devstral-2) | 72.2% | -- | ~12B | MIT modified |
 | [Qwen3-Coder-Next 80B-A3B](https://huggingface.co/Qwen/Qwen3-Coder-Next-80B-A3B) | 70.6% | -- | 3B | Apache 2.0 |
 | [Qwen2.5-Coder-32B](https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct) | 69.6% | -- | 32B | Apache 2.0 |
 | [Devstral Small 2](https://huggingface.co/mistralai/Devstral-Small-2-2505) | 68.0% | -- | 24B | Apache 2.0 |
-| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 66.4% | -- | 3.46B | Apache 2.0 |
 | [GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash) | 59.2% | -- | 3B | MIT |
 | [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 62.4% | **2622** | 5.1B | Apache 2.0 |
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | -- | 2150 | 31B | Apache 2.0 |
@@ -161,7 +161,7 @@ Specialized coders measured on benchmarks other than SWE-bench.
 |-------|-----------------|----------------|--------|---------|
 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) | **90.3** | **73.0** (2.1) | 27B | Apache 2.0 |
 | [Nemotron 3.5 Super-VL](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16) | 88.22 | 60.67 (2.1) | 12B | OpenMDW-1.1 |
-| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 85.9 | -- | 3.46B | Apache 2.0 |
+| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 85.1 | -- | 3.46B | Apache 2.0 |
 | [Raon-1-mini-preview](https://huggingface.co/KRAFTON/Raon-1-mini-preview) | 81.6 | -- | 4.3B | Apache 2.0 |
 | [Laguna S 2.1](https://huggingface.co/poolside/Laguna-S-2.1) | -- | 70.2% (2.1) | ~8B (118B total) | OpenMDW-1.1 |
 | [Muse-Glimmer-30B](https://huggingface.co/meta-models/Muse-Glimmer-30B) | -- | 51.7 (2.1, terminus2) | 29.6B | Apache 2.0 |
@@ -199,8 +199,8 @@ Graduate-level questions in physics, chemistry, biology. Designed to be unsolvab
 | [Inkling-Small](https://huggingface.co/thinkingmachines/Inkling-Small) *(extended)* | 89.5 | 12B |
 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) | 89.2 | 27B |
 | [Nemotron 3.5 Bolt 74B-A9B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-BF16) | 88.83 | 9B |
+| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 84.8 | 3.46B |
 | [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it) | 84.3 | 31B |
-| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 84.3 | 3.46B |
 | [Raon-1-mini-preview](https://huggingface.co/KRAFTON/Raon-1-mini-preview) | 84.3 | 4.3B |
 | [Muse-Glimmer-30B](https://huggingface.co/meta-models/Muse-Glimmer-30B) | 83.5 (AA) | 29.6B |
 | [Gemma 4 26B-A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) | 82.3 | 3.8B |
@@ -223,7 +223,7 @@ Competition-level math requiring creativity and multi-step reasoning. Each year'
 | [Nemotron 3 Nano](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) | **99.2%** | 2025, with tools | 3.5B |
 | [GPT-OSS-120B](https://huggingface.co/openai/GPT-OSS-120B) | 96.6% | 2024, with tools | 5.1B |
 | [GPT-OSS-20B](https://huggingface.co/openai/GPT-OSS-20B) | 96.0% | 2024, with tools | 3.6B |
-| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 96.0% | 2026, reasoning high | 3.46B |
+| [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1-BF16) | 96.7% | 2026, reasoning high | 3.46B |
 | [Inkling-Small](https://huggingface.co/thinkingmachines/Inkling-Small) *(extended)* | 95.5% | 2026 | 12B |
 | [Muse-Glimmer-30B](https://huggingface.co/meta-models/Muse-Glimmer-30B) | 94.7% | 2026, high reasoning | 29.6B |
 | [Raon-1-mini-preview](https://huggingface.co/KRAFTON/Raon-1-mini-preview) | 93.3% | 2026 | 4.3B |
@@ -718,6 +718,12 @@ tools/hf_roots.py        # updates data/models.json and ROOTS.md (~500 API calls
 ```
 
 `ROOTS.md` is a candidate pool, not the list: a model enters this README only after a read of its card.
+
+**Triage app.** [`tools/triage.py`](tools/triage.py) serves a small local web app (`http://127.0.0.1:8765`, stdlib only) to go through the candidates one by one — name, publisher, domain, input modalities (text / image / video / audio), size and Q4 estimate, license, lineage warnings, the first paragraphs of the model card and the scores found in it — and keep or drop each one, with an optional reason. Decisions go to `data/triage.json` and are applied by the next `hf_roots.py` run (*keep* = selected for this README, or a derivative kept as an exception; *drop* = set aside). A **Benchmarks** tab compares every model (candidates and README entries) on the benchmarks you pick, sortable by any column. Scores are extracted automatically from the tables of the model cards (the column or row whose header matches the model name, names normalised: `GPQA-Diamond` → `GPQA Diamond`); each value shows the card row and column it came from, and settings (thinking mode, tools, harness, n-shot) differ between cards — check before quoting.
+
+```sh
+tools/hf_roots.py && tools/triage.py    # scan, then open the triage app
+```
 
 ## Contributing
 
