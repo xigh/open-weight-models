@@ -1,0 +1,111 @@
+# Configuration of tools/hf_roots.py — edited by hand.
+#
+# The tool scans every model of the organisations listed in [orgs], keeps the
+# root ones (published by the lab that trained them: no third-party fine-tunes,
+# quantizations, merges or adapters), and merges them into data/models.json.
+# ROOTS.md is regenerated from that database at each run, newest first.
+
+[criteria]
+# README criterion 3: released after April 2024.
+since = "2024-04-01"
+# README criterion 2: Q4 footprint tiers, in GB (Q4 ≈ 0.55 bytes/param).
+main_q4_gb = 128
+extended_q4_gb = 256
+# "llm" = text-generation, image-text-to-text, any-to-any... ; "all" = every pipeline.
+pipelines = "llm"
+# ROOTS.md shows a family once its likes (summed over its repos) reach this;
+# below, it is tracked in data/models.json but not shown. Lab research
+# checkpoints (hundreds at Ai2, NVIDIA, Google...) mostly stay under it.
+report_min_likes = 50
+
+[discovery]
+# A global scan of Hugging Face sorted by likes, down to this many likes, is used
+# to suggest organisations not followed yet (section "Suggested organisations").
+min_likes = 100
+# An unfollowed organisation is suggested when one of its roots has this many likes.
+suggest_min_likes = 300
+
+# Followed organisations: Hugging Face account = display name.
+[orgs]
+Qwen = "Alibaba (Qwen)"
+deepseek-ai = "DeepSeek"
+google = "Google"
+zai-org = "Zhipu AI (Z.ai)"
+moonshotai = "Moonshot AI"
+nvidia = "NVIDIA"
+mistralai = "Mistral AI"
+openai = "OpenAI"
+meta-llama = "Meta"
+meta-models = "Meta"
+facebook = "Meta (FAIR)"
+microsoft = "Microsoft"
+apple = "Apple"
+ibm-granite = "IBM"
+xai-org = "xAI"
+openbmb = "OpenBMB"
+LiquidAI = "Liquid AI"
+MiniMaxAI = "MiniMax"
+tencent = "Tencent"
+inclusionAI = "Ant Group"
+XiaomiMiMo = "Xiaomi"
+baidu = "Baidu"
+stepfun-ai = "StepFun"
+meituan-longcat = "Meituan"
+ByteDance-Seed = "ByteDance Seed"
+ByteDance = "ByteDance"
+bytedance-research = "ByteDance Research"
+rednote-hilab = "Xiaohongshu (dots)"
+internlm = "Shanghai AI Lab"
+OpenGVLab = "Shanghai AI Lab"
+CohereLabs = "Cohere"
+thinkingmachines = "Thinking Machines"
+allenai = "Ai2"
+poolside = "Poolside"
+reflection = "Reflection AI"
+EssentialAI = "Essential AI"
+ServiceNow-AI = "ServiceNow"
+Salesforce = "Salesforce"
+amazon = "Amazon"
+Snowflake = "Snowflake"
+arcee-ai = "Arcee"
+JetBrains = "JetBrains"
+HuggingFaceTB = "Hugging Face"
+LGAI-EXAONE = "LG AI Research"
+upstage = "Upstage"
+naver-hyperclovax = "Naver"
+kakaocorp = "Kakao"
+skt = "SK Telecom"
+Motif-Technologies = "Motif Technologies"
+KRAFTON = "Krafton"
+sarvamai = "Sarvam AI"
+tiiuae = "TII (Falcon)"
+humain-ai = "Humain"
+yandex = "Yandex"
+ai-sage = "Sber (GigaChat)"
+Skywork = "Skywork"
+OpenMOSS-Team = "OpenMOSS (Fudan)"
+BAAI = "BAAI"
+RekaAI = "Reka"
+ai21labs = "AI21 Labs"
+Zyphra = "Zyphra"
+sapientinc = "Sapient Intelligence"
+swiss-ai = "Swiss AI (Apertus)"
+utter-project = "EuroLLM"
+PleIAs = "Pleias"
+lightonai = "LightOn"
+Aleph-Alpha = "Aleph Alpha"
+
+# Families or repos set aside: never listed as candidates, shown in their own
+# section. Key = family ("author/name" lowercased, -Instruct/-Base/-FP8/date
+# suffixes stripped) or exact repo id; value = reason.
+[ignore]
+"nvidia/nvidia-nemotron-3.5-bolt-74b-a9b" = "set aside (Philippe) — lab derivative of Nemotron 3.5 Super-VL"
+"nvidia/nvidia-nemotron-3.5-bolt-e4b" = "set aside (Philippe) — Bolt family"
+# v5 review (2026-10-29): undeclared derivatives of another lab's model, per their cards
+"openbmb/minicpm-v-4.7-35b-a3b" = "derivative — Qwen3.5/3.6 language backbone (card acknowledgements)"
+"openbmb/minicpm-v-4.7-1b" = "derivative — Qwen3.5/3.6 language backbone (MiniCPM-V 4.7 family)"
+"microsoft/mage-vl" = "derivative — Qwen3-4B-Instruct-2507 language backbone (card)"
+"baidu/unlimited-ocr" = "derivative — DeepSeek-OCR (same param count, card: 'push Deepseek-OCR one step further')"
+"baidu/unlimited-ocr-2" = "derivative — DeepseekOCRForCausalLM architecture, v1 lineage"
+"internlm/intern-s2-397b" = "derivative — Qwen3.5-MoE 397B layout (config), base not stated"
+"qwen/qwen-agentworld-35b-a3b" = "first-party fine-tune of Qwen3.5-35B-A3B-Base (card)"
