@@ -50,6 +50,7 @@ Usage:
 """
 
 import argparse
+import concurrent.futures
 import datetime as dt
 import hashlib
 import json
@@ -369,6 +370,169 @@ def modalities_of(m):
     return out
 
 
+# --------------------------------------------------------------------------
+# config.json: architecture summary
+
+LAYER_KIND = [  # (label, pattern on a layer type name), first match wins
+    ("SWA", r"slid|local|swa"),
+    ("linear", r"linear|kda|delta|lightning"),
+    ("Mamba", r"mamba|ssm"),
+    ("conv", r"conv"),
+    ("sparse", r"sparse|dsa"),
+    ("full", r"full|global|attention|attn|gqa|mla"),
+]
+FULL_KINDS = {"full", "sparse"}  # KV grows with context; SWA/linear/Mamba/conv are bounded
+# model types whose layers are all full attention, so an absent layout is not a gap
+PURE_ATTENTION = {
+    "llama", "mistral", "mixtral", "qwen2", "qwen2_moe", "qwen3", "qwen3_moe", "qwen2_vl",
+    "qwen2_5_vl", "qwen3_vl", "qwen3_vl_moe", "phi", "phi3", "phimoe", "olmo", "olmo2",
+    "olmoe", "granite", "granitemoe", "exaone", "exaone4", "deepseek_v2", "deepseek_v3",
+    "glm", "glm4", "glm4_moe", "glm4v", "glm4v_moe", "chatglm", "internlm2", "internlm3",
+    "minicpm", "minicpm3", "cohere", "starcoder2", "hunyuan_v1_dense", "hunyuan_v1_moe",
+    "hy_v3", "ernie4_5", "ernie4_5_moe", "seed_oss", "apertus", "smollm3", "laguna",
+    "kimi_k2", "dots1", "bailing_moe", "falcon", "mistral3", "pixtral",
+}
+
+
+def first(d, *keys):
+    for k in keys:
+        if isinstance(d, dict) and d.get(k) not in (None, "", []):
+            return d[k]
+    return None
+
+
+def fetch_config(repo, cache_dir, ttl_days=30):
+    """config.json of a repo, cached; {"config": ..} or {"error": ..}."""
+    path = os.path.join(cache_dir, "configs", hashlib.sha256(repo.encode()).hexdigest() + ".json")
+    if os.path.exists(path) and time.time() - os.path.getmtime(path) < ttl_days * 86400:
+        with open(path) as f:
+            return json.load(f)
+    url = f"https://huggingface.co/{repo}/raw/main/config.json"
+    try:
+        with urllib.request.urlopen(urllib.request.Request(
+                url, headers={"User-Agent": "hf_roots/1"}), timeout=30) as r:
+            res = {"config": json.load(r)}
+    except urllib.error.HTTPError as e:
+        res = {"error": "gated" if e.code in (401, 403) else f"HTTP {e.code}"}
+    except (OSError, ValueError) as e:
+        return {"error": str(e)}  # not cached: retried next run
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(res, f)
+    return res
+
+
+def arch_summary(cfg):
+    """Facts from config.json, plus a KV-cache-per-token estimate (bf16) that
+    only counts layers whose KV grows with the context."""
+    t = first(cfg, "text_config", "llm_config", "language_config", "text_model") or cfg
+    if not isinstance(t, dict):
+        t = cfg
+    a = {"model_type": cfg.get("model_type"),
+         "architecture": (cfg.get("architectures") or [None])[0],
+         "layers": first(t, "num_hidden_layers", "n_layers", "num_layers", "n_layer"),
+         "hidden": first(t, "hidden_size", "d_model", "n_embd", "dim"),
+         "heads": first(t, "num_attention_heads", "n_heads", "n_head"),
+         "vocab": first(t, "vocab_size", "padded_vocab_size")}
+    a["kv_heads"] = first(t, "num_key_value_heads", "n_kv_heads", "num_kv_heads") or a["heads"]
+    hd = first(t, "head_dim", "attention_head_dim")
+    if not hd and a["hidden"] and a["heads"]:
+        hd = a["hidden"] // a["heads"]
+    a["head_dim"] = hd
+    a["ctx"] = first(t, "max_position_embeddings", "model_max_length", "seq_length",
+                     "max_sequence_length", "n_positions") or first(cfg, "max_position_embeddings", "model_max_length")
+    rope = first(t, "rope_scaling", "rope_parameters") or {}
+    if isinstance(rope, dict) and rope.get("factor") and rope.get("rope_type", rope.get("type")) not in (None, "default"):
+        a["rope"] = f"{rope.get('rope_type', rope.get('type'))} ×{rope['factor']:g}"
+    a["experts"] = first(t, "n_routed_experts", "num_experts", "num_local_experts", "moe_num_experts")
+    a["experts_active"] = first(t, "num_experts_per_tok", "num_experts_per_token", "moe_k", "moe_top_k",
+                                "experts_top_k", "top_k_experts", "num_activated_experts")
+    a["experts_shared"] = first(t, "n_shared_experts", "num_shared_experts")
+    a["mtp"] = first(t, "num_nextn_predict_layers", "mtp_num_hidden_layers", "num_mtp_layers")
+    a["sliding_window"] = first(t, "sliding_window", "sliding_window_size")
+    a["dtype"] = first(cfg, "torch_dtype", "dtype") or first(t, "torch_dtype", "dtype")
+    q = cfg.get("quantization_config") or {}
+    a["quant"] = " ".join(str(x) for x in (q.get("quant_method"), q.get("fmt") or q.get("bits")) if x) or None
+    mla = first(t, "kv_lora_rank")
+    a["mla"] = bool(mla)
+    a["mtp"] = a["mtp"] or None  # 0 = no MTP layer
+
+    # attention layout
+    counts, declared = {}, True
+    types = first(t, "layer_types", "layers_block_type", "block_types", "attn_type_list")
+    if isinstance(types, str):
+        types = list(types)
+    if isinstance(types, list) and types and all(isinstance(x, str) for x in types):
+        for x in types:
+            for label, pat in LAYER_KIND:
+                if re.search(pat, x.lower()):
+                    counts[label] = counts.get(label, 0) + 1
+                    break
+    elif isinstance(first(t, "hybrid_layer_pattern"), list) and a["layers"]:
+        # MiMo: 1 = sliding-window layer, 0 = global (39 SWA + 9 GA per its card)
+        swa = sum(1 for x in t["hybrid_layer_pattern"] if x)
+        counts = {"SWA": swa, "full": len(t["hybrid_layer_pattern"]) - swa}
+    elif isinstance(first(t, "local_layer_ids"), list) and a["layers"]:
+        swa = len(t["local_layer_ids"])
+        counts = {"SWA": swa, "full": a["layers"] - swa}
+    elif first(t, "layer_group_size") and a["mla"] and a["layers"]:
+        # Ling / bailing_hybrid: one MLA layer per group, the others linear (KDA)
+        g = a["layers"] // t["layer_group_size"]
+        counts = {"full": g, "linear": a["layers"] - g}
+    elif isinstance(first(t, "gqa_layers"), list) and a["layers"]:
+        g = len(t["gqa_layers"])
+        counts = {"full": g, "linear": a["layers"] - g}
+    elif first(t, "full_attention_interval") and a["layers"]:
+        g = a["layers"] // t["full_attention_interval"]
+        counts = {"full": g, "linear": a["layers"] - g}
+    elif a["layers"]:
+        declared = a["model_type"] in PURE_ATTENTION
+        counts = {"full": a["layers"]}
+    a["layout"] = counts
+    a["layout_declared"] = declared
+    n_full = sum(v for k, v in counts.items() if k in FULL_KINDS)
+    if mla:
+        per_layer = (mla + (first(t, "qk_rope_head_dim") or 0)) * 2
+    elif a["kv_heads"] and hd:
+        # global layers may have their own KV heads / head dim (Gemma 4)
+        per_layer = 2 * (first(t, "num_global_key_value_heads") or a["kv_heads"]) \
+            * (first(t, "global_head_dim") or hd) * 2
+    else:
+        per_layer = None
+    a["kv_bytes_per_token"] = per_layer * n_full if per_layer and n_full else None
+
+    keys = " ".join(cfg.keys()).lower()
+    a["vision"] = bool(re.search(r"vision|visual|image_token|vit_|siglip|radio", keys))
+    a["audio"] = bool(re.search(r"audio|speech|whisper", keys))
+    return {k: v for k, v in a.items() if v not in (None, {}, False) or k in ("layout_declared",)}
+
+
+def arch_short(a):
+    """One-line summary for ROOTS.md."""
+    if not a:
+        return ""
+    if a.get("error"):
+        return f"config: {a['error']}"
+    parts = []
+    if a.get("experts"):
+        e = f"MoE {a['experts']}×{a.get('experts_active', '?')}"
+        if a.get("experts_shared"):
+            e += f"+{a['experts_shared']}"
+        parts.append(e)
+    if a.get("layers"):
+        parts.append(f"{a['layers']}L")
+    lay = a.get("layout") or {}
+    if len(lay) > 1:
+        parts.append("/".join(f"{v} {k}" for k, v in sorted(lay.items(), key=lambda kv: -kv[1])))
+    if a.get("mla"):
+        parts.append("MLA")
+    if a.get("ctx"):
+        parts.append(f"{a['ctx'] // 1024}K" + (f" ({a['rope']})" if a.get("rope") else ""))
+    if a.get("mtp"):
+        parts.append(f"MTP {a['mtp']}")
+    return " · ".join(parts)
+
+
 def load_triage(path):
     """Decisions made in tools/triage.py: {family: {decision, reason, ...}}."""
     if not path or not os.path.exists(path):
@@ -582,6 +746,29 @@ def group_families(rows):
 VOLATILE = ("likes", "downloads")
 
 
+def attach_configs(fams, cfg, cache_dir):
+    """config.json of each family shown in ROOTS.md (or listed / kept):
+    architecture summary + modalities seen in the config."""
+    want = [f for f in fams if f["likes"] >= cfg["criteria"]["report_min_likes"]
+            or f["listed"] or f.get("kept")]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(lambda f: fetch_config(f["id"], cache_dir), want))
+    errors = 0
+    for f, r in zip(want, results):
+        if "config" in r and isinstance(r["config"], dict):
+            a = arch_summary(r["config"])
+            f["arch"] = a
+            mods = set(f.get("modalities") or ["text"])
+            mods |= {"image"} if a.get("vision") else set()
+            mods |= {"audio"} if a.get("audio") else set()
+            f["modalities"] = [x for x in ("text", "image", "video", "audio", "→ audio")
+                               if x in mods]
+        else:
+            f["arch"] = {"error": r.get("error")}
+            errors += 1
+    log(f"config.json: {len(want) - errors}/{len(want)} read", always=True)
+
+
 def merge_db(path, fams, stats, suggestions, generated, min_likes):
     """Fold this run into the persistent database.
 
@@ -656,8 +843,8 @@ LICENSE_MARK = {"open": "", "llama": " (EU: text-only)", "conditional": " ⚠️
 
 
 def md_table(fams):
-    lines = ["| Model | Publisher | Released | Total | Active | Q4 | Inputs | License | Likes | Note |",
-             "|-------|-----------|----------|-------|--------|----|----------|---------|------:|------|"]
+    lines = ["| Model | Publisher | Released | Total | Active | Q4 | Inputs | Architecture (config.json) | License | Likes | Note |",
+             "|-------|-----------|----------|-------|--------|----|--------|----------------------------|---------|------:|------|"]
     for r in fams:
         note = []
         if r["kind"] == "lab-derivative":
@@ -688,6 +875,7 @@ def md_table(fams):
             f"| [{r['id']}](https://huggingface.co/{r['id']}) | {r['publisher']} | {released} "
             f"| {fmt_params(r['params'])} | {fmt_params(r['active']) if r['active'] else '--'} "
             f"| {q4} | {' + '.join(r.get('modalities') or []) or r['pipeline'] or '--'} "
+            f"| {arch_short(r.get('arch'))} "
             f"| {r['license']}{LICENSE_MARK[r['license_class']]} | {r['likes']} "
             f"| {'; '.join(note)} |")
     return "\n".join(lines)
@@ -826,6 +1014,7 @@ def main():
     rows, stats, suggestions = analyse(pool, cfg, readme_repos(args.readme),
                                        load_triage(args.triage))
     fams = group_families(rows)
+    attach_configs(fams, cfg, args.cache_dir)
     db, current, new = merge_db(args.db, fams, stats, suggestions, now_iso(),
                                 cfg["criteria"]["report_min_likes"])
     write_db(args.db, db)

@@ -62,6 +62,11 @@ main { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; height: c
 .sizes div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 .sizes b { display: block; font-size: 19px; }
 .sizes span { color: var(--muted); font-size: 12px; }
+.arch { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 4px 16px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; }
+.arch h3 { grid-column: 1 / -1; margin: 0 0 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.arch h3 a { color: var(--accent); font-weight: 400; }
+.arch div span { color: var(--muted); }
 .warn { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; font-size: 14px; }
 .desc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
   margin-bottom: 12px; white-space: pre-wrap; }
@@ -173,6 +178,35 @@ let state = { pile: "candidates", current: null, q: "", tier: "mainext", lic: "n
   scope: "all", benchSel: ["GPQA Diamond", "MMLU-Pro", "AIME 2026", "LiveCodeBench v6", "SWE-bench Verified", "Terminal-Bench 2.1"],
   benchSort: "GPQA Diamond", benchAsc: false, benchAll: false };
 let benches = {}, scan = { running: false };
+const ARCH_COLS = { ctx: "Contexte", layers: "Couches", attn: "Attention", experts: "Experts", kv: "KV / token" };
+if (!state.archCols) state.archCols = ["ctx", "kv"];
+const LAYER_LABEL = { full: "complète", linear: "linéaire", SWA: "SWA", Mamba: "Mamba", conv: "conv", sparse: "sparse" };
+function fmtK(n) { return n >= 1048576 ? (n / 1048576).toFixed(n % 1048576 ? 1 : 0) + "M" : Math.round(n / 1024) + "K"; }
+function layoutText(a) {
+  const l = a.layout || {};
+  const parts = Object.entries(l).sort((x, y) => y[1] - x[1]).map(([k, v]) => v + " " + (LAYER_LABEL[k] || k));
+  return (parts.join(" + ") || "?") + (a.layout_declared ? "" : " (non déclaré)") + (a.mla ? " · MLA" : "");
+}
+function kvText(a, long) {
+  if (!a.kv_bytes_per_token) return "—";
+  const k = a.kv_bytes_per_token / 1024, pre = a.layout_declared ? "" : "≤ ";
+  return pre + (k < 10 ? k.toFixed(1) : Math.round(k)) + " KiB" + (long ? ` / token → ${pre}${(a.kv_bytes_per_token * 131072 / 2 ** 30).toFixed(1)} GiB à 128K (bf16)` : "");
+}
+function archVal(m, col) {
+  const a = m.arch || {};
+  if (a.error) return null;
+  return { ctx: a.ctx || null, layers: a.layers || null, attn: a.layout ? (a.layout.full || 0) + (a.layout.sparse || 0) : null,
+    experts: a.experts || null, kv: a.kv_bytes_per_token || null }[col];
+}
+function archText(m, col) {
+  const a = m.arch || {};
+  if (a.error) return "—";
+  if (col === "ctx") return a.ctx ? fmtK(a.ctx) : "—";
+  if (col === "layers") return a.layers || "—";
+  if (col === "attn") return a.layout ? layoutText(a) : "—";
+  if (col === "experts") return a.experts ? `${a.experts}×${a.experts_active || "?"}${a.experts_shared ? "+" + a.experts_shared : ""}` : "dense";
+  if (col === "kv") return kvText(a);
+}
 try { Object.assign(state, JSON.parse(localStorage.getItem("triage-state") || "{}")); } catch (e) {}
 const cards = {};
 
@@ -275,6 +309,28 @@ function renderDetail() {
     el("div", {}, el("b", { text: fmtP(m.params) }), el("span", { text: "paramètres" })),
     el("div", {}, el("b", { text: m.active ? fmtP(m.active) : "—" }), el("span", { text: "actifs (MoE)" })),
     el("div", {}, el("b", { text: m.q4_gb ? Math.round(m.q4_gb) + " GB" : "?" }), el("span", { text: "VRAM Q4 estimée" }))));
+  const a = m.arch;
+  if (a) {
+    const box = el("div", { class: "arch" }, el("h3", {}, "Architecture (config.json) · ",
+      el("a", { href: `https://huggingface.co/${m.id}/blob/main/config.json`, target: "_blank", rel: "noopener", text: "voir le fichier ↗" })));
+    const kv = (k, v) => v != null && v !== "" && box.append(el("div", {}, el("span", { text: k + " : " }), String(v)));
+    if (a.error) kv("config.json", a.error === "gated" ? "accès sur demande" : a.error);
+    else {
+      kv("Type", [a.model_type, a.architecture].filter(Boolean).join(" · "));
+      kv("Couches", a.layers);
+      kv("Attention", layoutText(a));
+      kv("Têtes Q / KV", a.heads ? `${a.heads} / ${a.kv_heads}` + (a.head_dim ? ` (dim ${a.head_dim})` : "") : null);
+      kv("Hidden", a.hidden);
+      kv("Experts", a.experts ? `${a.experts} routés, ${a.experts_active || "?"} actifs` + (a.experts_shared ? ` + ${a.experts_shared} partagé(s)` : "") : "dense");
+      kv("Contexte", a.ctx ? a.ctx.toLocaleString("fr-FR") + (a.rope ? ` (${a.rope})` : "") : null);
+      kv("Fenêtre SWA", a.sliding_window);
+      kv("MTP", a.mtp ? a.mtp + " couche(s)" : null);
+      kv("Vocabulaire", a.vocab ? a.vocab.toLocaleString("fr-FR") : null);
+      kv("Poids", [a.dtype, a.quant].filter(Boolean).join(" · "));
+      kv("Cache KV", kvText(a, true));
+    }
+    card.append(box);
+  }
   const warns = [];
   if (m.kind !== "root" && m.why) warns.push("Filiation : " + m.why);
   if (m.suspect_base) warns.push("⚠️ Même nombre de paramètres que " + m.suspect_base + " : probablement un fine-tune non déclaré.");
@@ -361,6 +417,14 @@ function renderBench() {
   scanBtn.onclick = async () => { await fetch("/api/scan-cards", { method: "POST" }); pollScan(); };
   tools.append(scope, el("label", {}, allBox, " seulement les modèles qui ont tous les benchmarks choisis"), scanBtn);
   box.append(tools);
+  const ac = el("div", { class: "bchips" }, el("span", { class: "meta", text: "Colonnes d'architecture : " }));
+  for (const [k, label] of Object.entries(ARCH_COLS)) {
+    const on = state.archCols.includes(k);
+    const c = el("button", { class: "bchip", "aria-pressed": String(on), text: label });
+    c.onclick = () => { state.archCols = on ? state.archCols.filter((x) => x !== k) : [...state.archCols, k]; save(); renderBench(); };
+    ac.append(c);
+  }
+  box.append(ac);
   // benchmark chips, most reported first
   const chips = el("div", { class: "bchips" });
   const names = Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b));
@@ -379,7 +443,8 @@ function renderBench() {
     .filter((r) => sel.length && (state.benchAll ? sel.every((b) => r.v[b]) : sel.some((b) => r.v[b])));
   const sk = state.benchSort, dir = state.benchAsc ? 1 : -1;
   const keyOf = (r) => sk === "_name" ? r.m.id.toLowerCase() : sk === "_size" ? (r.m.params || 0) : sk === "_q4" ? (r.m.q4_gb || 0)
-    : sk === "_active" ? (r.m.active || r.m.params || 0) : (r.v[sk] ? r.v[sk].value : null);
+    : sk === "_active" ? (r.m.active || r.m.params || 0) : sk.startsWith("_a_") ? archVal(r.m, sk.slice(3))
+    : (r.v[sk] ? r.v[sk].value : null);
   rows.sort((a, b) => {
     const ka = keyOf(a), kb = keyOf(b);
     if (ka === null && kb === null) return 0; if (ka === null) return 1; if (kb === null) return -1;
@@ -399,6 +464,7 @@ function renderBench() {
   };
   head.append(th("_name", "Modèle", true), el("th", { class: "l", text: "Éditeur" }), th("_size", "Total"), th("_active", "Actifs"), th("_q4", "Q4"),
     el("th", { class: "l", text: "Entrées" }), el("th", { class: "l", text: "Statut" }));
+  for (const c of state.archCols) head.append(th("_a_" + c, ARCH_COLS[c], c === "attn"));
   for (const b of sel) head.append(th(b, b));
   t.append(el("thead", {}, head));
   const tb = el("tbody");
@@ -412,6 +478,7 @@ function renderBench() {
       el("td", { text: m.q4_gb ? Math.round(m.q4_gb) + " GB" : "?" }),
       el("td", { class: "l", text: (m.modalities || []).filter((x) => x !== "text").map((x) => MOD_LABEL[x]).join(", ") || "texte" }),
       el("td", { class: "l", text: status }));
+    for (const c of state.archCols) tr.append(el("td", { class: c === "attn" ? "l" : "", text: archText(m, c) }));
     if (m.pile !== "listed") {
       name.title = "Clic : ouvrir dans le tri · ⌘-clic : Hugging Face";
       name.addEventListener("click", (e) => {

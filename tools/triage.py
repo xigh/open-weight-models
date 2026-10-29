@@ -91,7 +91,7 @@ def models(args):
             pile = "candidates"
         out.append({k: f.get(k) for k in (
             "id", "family", "publisher", "domain", "modalities", "pipeline", "params", "active",
-            "q4_gb", "tier", "license", "license_class", "likes", "created", "latest",
+            "q4_gb", "tier", "license", "license_class", "likes", "created", "latest", "arch",
             "kind", "why", "suspect_base", "related_listed", "variants", "gated")}
             | {"pile": pile})
     return {"generated": run.get("generated"), "models": out,
