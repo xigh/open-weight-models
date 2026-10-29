@@ -11,7 +11,11 @@ derivation as `base_model:{finetune,quantized,adapter,merge}:<repo>` tags:
   lab-derivative  base_model in the same lab but a new family (a model the lab
                   derived from its own: pruned, distilled, RL-tuned) — listed
                   in its own section, apart from the roots
-  derivative      base_model from another author — dropped
+  derivative      base_model from another author — dropped. The base chain is
+                  followed through the lab's own repos: a quantization of a
+                  lab's fine-tune of another lab's model is a derivative too.
+  kept            a derivative listed in config.toml [keep]: an exception
+                  kept on purpose, shown in its own section
 
 Undeclared derivatives are caught by three extra signals:
   - the author is a known repackager (unsloth, bartowski, mlx-community...)
@@ -212,14 +216,12 @@ def author_of(repo):
 
 def base_models(m):
     """[(relation, repo)] from base_model:<rel>:<repo> tags (+ cardData)."""
-    out = []
-    for t in m.get("tags") or []:
-        if t.startswith("base_model:"):
-            parts = t.split(":", 2)
-            if len(parts) == 3:
-                out.append((parts[1], parts[2]))
-            elif len(parts) == 2 and not any(r == parts[1] for _, r in out):
-                out.append(("unknown", parts[1]))
+    tags = [t.split(":", 2) for t in m.get("tags") or [] if t.startswith("base_model:")]
+    # explicit base_model:<rel>:<repo> first, bare base_model:<repo> as fallback
+    out = [(p[1], p[2]) for p in tags if len(p) == 3]
+    for p in tags:
+        if len(p) == 2 and not any(r == p[1] for _, r in out):
+            out.append(("unknown", p[1]))
     bm = (m.get("cardData") or {}).get("base_model")
     for r in ([bm] if isinstance(bm, str) else bm or []):
         if isinstance(r, str) and not any(x == r for _, x in out):
@@ -254,6 +256,27 @@ def classify(m, aliases):
     if any(family_of(r) == fam for _, r in bases):
         return "variant", "of " + bases[0][1]
     return "lab-derivative", f"{bases[0][0]} of {bases[0][1]}"
+
+
+def classify_deep(m, aliases, pool, memo, depth=0):
+    """classify(), then follow same-lab bases inside the pool: if one of them
+    is a third-party derivative, so is m (e.g. Bolt-E4B-4GB is a quantization
+    of NVIDIA's Bolt-E4B-BF16, itself a fine-tune of google/gemma-4-E4B-it)."""
+    key = m["id"]
+    if key in memo:
+        return memo[key]
+    kind, why = classify(m, aliases)
+    if kind in ("variant", "lab-derivative") and depth < 8:
+        for _, r in base_models(m):
+            base = pool.get(r)
+            if not base or r == key:
+                continue
+            bkind, bwhy = classify_deep(base, aliases, pool, memo, depth + 1)
+            if bkind == "derivative":
+                kind, why = "derivative", f"via {r}: {bwhy}"
+                break
+    memo[key] = (kind, why)
+    return kind, why
 
 
 def params_of(m):
@@ -376,12 +399,14 @@ def analyse(pool, cfg, listed_repos):
     crit = cfg["criteria"]
     followed = {a.lower(): name for a, name in cfg["orgs"].items()}
     ignore = {k.lower(): v for k, v in cfg.get("ignore", {}).items()}
+    keep = {k.lower(): v for k, v in cfg.get("keep", {}).items()}
+    memo = {}
 
     # root models per exact parameter count, oldest first, for the suspect check
     by_params = {}
     for m in sorted(pool.values(), key=lambda m: m.get("createdAt", "")):
         total = (m.get("safetensors") or {}).get("total")
-        if total and total > 1e8 and classify(m, followed)[0] == "root":
+        if total and total > 1e8 and classify_deep(m, followed, pool, memo)[0] == "root":
             by_params.setdefault(total, []).append(m)
 
     readme_families = {family_of(r) for r in listed_repos}
@@ -398,7 +423,7 @@ def analyse(pool, cfg, listed_repos):
         if (crit["pipelines"] != "all" and m.get("pipeline_tag") is None
                 and (total or 0) < 3e8):
             continue
-        kind, why = classify(m, followed)
+        kind, why = classify_deep(m, followed, pool, memo)
         author = author_of(m["id"])
         suspect = None
         if kind == "root" and total in by_params:
@@ -413,10 +438,11 @@ def analyse(pool, cfg, listed_repos):
             continue
         stats["followed_models"] += 1
         stats[kind] += 1
-        if kind == "derivative":
+        fam = family_of(m["id"])
+        kept = keep.get(m["id"].lower()) or keep.get(fam)
+        if kind == "derivative" and not kept:
             continue
         lic, lcls = license_of(m)
-        fam = family_of(m["id"])
         match, exact = listed_match(fam, readme_families)
         rows.append({
             "id": m["id"], "author": author, "publisher": followed[author.lower()],
@@ -430,6 +456,7 @@ def analyse(pool, cfg, listed_repos):
             "listed": m["id"] in listed_repos or exact,
             "related_listed": None if exact else match,
             "ignored": ignore.get(m["id"].lower()) or ignore.get(fam),
+            "kept": kept,
         })
 
     suggestions = []
@@ -444,7 +471,7 @@ def analyse(pool, cfg, listed_repos):
     return rows, stats, suggestions
 
 
-KIND_RANK = {"root": 0, "lab-derivative": 1, "variant": 2}
+KIND_RANK = {"root": 0, "lab-derivative": 1, "variant": 2, "derivative": 3}
 
 
 def group_families(rows):
@@ -466,6 +493,7 @@ def group_families(rows):
         rep["latest"] = max(r["created"] for r in members)
         rep["listed"] = any(r["listed"] for r in members)
         rep["ignored"] = next((r["ignored"] for r in members if r["ignored"]), None)
+        rep["kept"] = next((r["kept"] for r in members if r["kept"]), None)
         out.append(rep)
     return out
 
@@ -553,6 +581,12 @@ def md_table(fams):
             note.append("gated")
         if r["params_source"] == "name":
             note.append("size from name")
+        if r["kind"] == "derivative":
+            note.append(r["why"])
+        if r.get("kept"):
+            note.append(f"kept: {r['kept']}")
+        if r["listed"]:
+            note.append("in README")
         if r["ignored"]:
             note.append(f"set aside: {r['ignored']}")
         q4 = f"{r['q4_gb']:.0f} GB" if r["q4_gb"] else "?"
@@ -576,7 +610,7 @@ def render_md(db, cfg, new):
     # below the report threshold they are tracked but not shown
     fams = [f for f in db["families"].values()
             if f["last_seen"] == db["generated"] and f["first_reported"]]
-    live = [f for f in fams if not f["ignored"]]
+    live = [f for f in fams if not f["ignored"] and not f.get("kept")]
     roots = [f for f in live if f["kind"] == "root" and not f["suspect_base"]]
     unlisted = [f for f in roots if not f["listed"]]
 
@@ -600,7 +634,7 @@ def render_md(db, cfg, new):
         f"pipelines {'all' if crit['pipelines'] == 'all' else 'LLM / VLM / any-to-any'}.",
         f"- Their models in scope: {s['followed_models']} → {s['root']} roots, {s['variant']} variants "
         f"(folded into their family), {s['lab-derivative']} lab derivatives, {s['derivative']} third-party "
-        f"derivatives or repackagings (dropped).",
+        f"derivatives or repackagings (dropped, except the `[keep]` exceptions).",
         "- One row per family (`-Instruct`, `-Base`, `-FP8`, drafters, date suffixes… folded), newest release "
         f"first; likes summed over the family. Shown once the family reaches {crit['report_min_likes']} likes "
         f"({len(db['families'])} families tracked in the database, {len(fams)} shown).",
@@ -630,6 +664,8 @@ def render_md(db, cfg, new):
         ("Suspected undeclared fine-tunes",
          sort_recent([f for f in live if f["suspect_base"] and not f["listed"]])),
         ("Already in README", sort_recent([f for f in live if f["listed"]])),
+        ("Kept exceptions in config.toml (derivatives kept on purpose)",
+         sort_recent([f for f in fams if f.get("kept") and not f["ignored"]])),
         ("Set aside in config.toml", sort_recent([f for f in fams if f["ignored"]])),
     ]
     for title, sel in sections:
@@ -664,6 +700,7 @@ def load_config(path):
     cfg["criteria"], cfg["discovery"] = crit, disc
     cfg.setdefault("orgs", {})
     cfg.setdefault("ignore", {})
+    cfg.setdefault("keep", {})
     return cfg
 
 

@@ -95,12 +95,16 @@ PleIAs = "Pleias"
 lightonai = "LightOn"
 Aleph-Alpha = "Aleph Alpha"
 
+# Derivatives kept on purpose (exceptions to "root models only"): shown in
+# their own section of ROOTS.md with their lineage. Same key format as [ignore].
+[keep]
+"nvidia/nvidia-nemotron-3.5-bolt-e4b" = "Philippe — NVIDIA post-training of google/gemma-4-E4B-it"
+"nvidia/nvidia-nemotron-3.5-bolt-74b-a9b" = "Philippe — NVIDIA compression (Star Elastic) of Nemotron 3.5 Super-VL"
+
 # Families or repos set aside: never listed as candidates, shown in their own
 # section. Key = family ("author/name" lowercased, -Instruct/-Base/-FP8/date
 # suffixes stripped) or exact repo id; value = reason.
 [ignore]
-"nvidia/nvidia-nemotron-3.5-bolt-74b-a9b" = "set aside (Philippe) — lab derivative of Nemotron 3.5 Super-VL"
-"nvidia/nvidia-nemotron-3.5-bolt-e4b" = "set aside (Philippe) — Bolt family"
 # v5 review (2026-10-29): undeclared derivatives of another lab's model, per their cards
 "openbmb/minicpm-v-4.7-35b-a3b" = "derivative — Qwen3.5/3.6 language backbone (card acknowledgements)"
 "openbmb/minicpm-v-4.7-1b" = "derivative — Qwen3.5/3.6 language backbone (MiniCPM-V 4.7 family)"
