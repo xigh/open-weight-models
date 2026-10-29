@@ -29,7 +29,8 @@ released since the date floor is scanned; a global scan sorted by likes is used
 to suggest organisations worth following.
 
 Every run is merged into data/models.json (one entry per family per line,
-first_seen / last_seen / first_reported tracked), and ROOTS.md is regenerated
+first_seen / first_reported / gone tracked; likes and downloads are per-run
+values, kept out of it so its git diff only shows real changes), and ROOTS.md is regenerated
 from it: families that reached the report threshold since the previous run
 first, then the candidates per tier, newest first, then what README.md already
 lists.
@@ -498,33 +499,45 @@ def group_families(rows):
     return out
 
 
-def merge_db(path, fams, stats, suggestions, generated, min_likes):
-    """Fold this run into the persistent database; return (db, newly reported).
+# Per-run values kept out of the database so that its git diff between two
+# runs shows only real changes (new families, new variants, reclassifications).
+VOLATILE = ("likes", "downloads")
 
-    A family is *reported* once its likes reach the report threshold; the run
-    where that first happens is its `first_reported`, which drives the "New
-    since previous run" section (a release with 3 likes today shows up as new
-    on the run where it becomes visible)."""
+
+def merge_db(path, fams, stats, suggestions, generated, min_likes):
+    """Fold this run into the persistent database.
+
+    Returns (db, current, new): `current` is this run's families with their
+    database fields plus this run's likes/downloads, `new` the families
+    reported for the first time. A family is *reported* once its likes reach
+    the report threshold; the run where that first happens is its
+    `first_reported` (a release with 3 likes today shows up as new on the run
+    where it becomes visible). A family missing from a run gets `gone`."""
     old_db = {}
     if os.path.exists(path):
         with open(path) as f:
             old_db = json.load(f)
     families = old_db.get("families", {})
-    new = set()
+    today = generated[:10]
+    current, new = {}, set()
     for r in fams:
         prev = families.get(r["family"]) or {}
-        entry = dict(r)
-        entry["first_seen"] = prev.get("first_seen") or generated
-        entry["last_seen"] = generated
+        entry = {k: v for k, v in r.items() if k not in VOLATILE}
+        entry["first_seen"] = prev.get("first_seen") or today
         entry["first_reported"] = prev.get("first_reported")
         if not entry["first_reported"] and r["likes"] >= min_likes:
             entry["first_reported"] = generated
             new.add(r["family"])
+        entry["gone"] = None
         families[r["family"]] = entry
+        current[r["family"]] = dict(entry, likes=r["likes"], downloads=r["downloads"])
+    for k, f in families.items():
+        if k not in current and not f.get("gone"):
+            f["gone"] = today
     db = {"generated": generated, "previous_run": old_db.get("generated"),
           "stats": stats, "suggested_orgs": suggestions,
           "families": dict(sorted(families.items()))}
-    return db, new
+    return db, current, new
 
 
 def write_db(path, db):
@@ -604,12 +617,11 @@ def sort_recent(fams):
     return sorted(fams, key=lambda f: (f["latest"], f["likes"]), reverse=True)
 
 
-def render_md(db, cfg, new):
+def render_md(db, current, cfg, new):
     crit, disc = cfg["criteria"], cfg["discovery"]
     # families not seen by this run (deleted, renamed) stay in the database only;
     # below the report threshold they are tracked but not shown
-    fams = [f for f in db["families"].values()
-            if f["last_seen"] == db["generated"] and f["first_reported"]]
+    fams = [f for f in current.values() if f["first_reported"]]
     live = [f for f in fams if not f["ignored"] and not f.get("kept")]
     roots = [f for f in live if f["kind"] == "root" and not f["suspect_base"]]
     unlisted = [f for f in roots if not f["listed"]]
@@ -724,11 +736,11 @@ def main():
     pool = collect(Client(args.cache_dir, args.ttl_hours), cfg)
     rows, stats, suggestions = analyse(pool, cfg, readme_repos(args.readme))
     fams = group_families(rows)
-    db, new = merge_db(args.db, fams, stats, suggestions, now_iso(),
-                       cfg["criteria"]["report_min_likes"])
+    db, current, new = merge_db(args.db, fams, stats, suggestions, now_iso(),
+                                cfg["criteria"]["report_min_likes"])
     write_db(args.db, db)
     with open(args.out_md, "w") as f:
-        f.write(render_md(db, cfg, new if db["previous_run"] else set()))
+        f.write(render_md(db, current, cfg, new if db["previous_run"] else set()))
     unlisted = sum(1 for r in fams if not r["listed"] and r["kind"] == "root")
     log(f"{len(fams)} families ({unlisted} roots not in README, {len(new)} newly reported) "
         f"-> {args.out_md}, {args.db}", always=True)
